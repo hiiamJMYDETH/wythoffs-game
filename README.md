@@ -1,1 +1,0 @@
-# Wythoffs Game
