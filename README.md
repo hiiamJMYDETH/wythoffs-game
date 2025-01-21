@@ -1,1 +1,1 @@
-# wythoffs-game
+# Wythoffs Game
