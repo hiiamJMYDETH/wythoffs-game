@@ -1,11 +1,25 @@
 .Board {
-    display:grid;
+    display:flex;
     border:1px solid black;
 }
 
 .Marble {
     color:rgb(255, 255, 255);
     border:1px solid black;
-    border-radius:50%;
-    width:10%;
+    border-radius:100%;
+    width: 100px;
+    height: 100px;
+}
+
+.game-board {
+    display:grid;
+    place-items:center;
+    min-height:100vh;
+    justify-items:center;
+    padding:10px;
+}
+
+.half-board {
+    border:1px solid black;
+    padding:10px;
 }
