@@ -1,25 +1,68 @@
-.Board {
+.board {
     display:flex;
-    border:1px solid black;
+    border:15px solid burlywood;
+    outline: 2px solid black;
+    box-shadow:4px 4px black;
 }
 
-.Marble {
-    color:rgb(255, 255, 255);
+.half-board {
+    background-color:grey;
+    border:2px solid black;
+    padding:10px;
+    width: 450px;
+    height: 325px
+}
+
+.marble {
+    background-color:rgb(17, 63, 41);
     border:1px solid black;
     border-radius:100%;
     width: 100px;
     height: 100px;
 }
 
-.game-board {
+.marble:hover{
+    box-shadow: 0 0 5px 5px black;
+    opacity:50%;
+}
+
+.selected {
+    box-shadow: 0 0 5px 5px greenyellow;
+}
+
+.game {
     display:grid;
     place-items:center;
     min-height:100vh;
     justify-items:center;
-    padding:10px;
 }
 
-.half-board {
-    border:1px solid black;
-    padding:10px;
+.button {
+    background-color:burlywood;
+    border: 1px solid black;
+    border-radius: 20px;
+    width: 150px;
+    height: 50px;
+    font-size:large;
+    box-shadow:2px 2px black;
+}
+
+.status {
+    background-color:burlywood;
+    border: 1px solid black;
+    border-radius: 20px;
+    width: 200px;
+    height: 100px;
+    font-size:large;
+    place-items:center;
+    box-shadow: 2px 2px black;
+}
+
+.button:hover {
+    transform: translate(2px, 2px);
+    box-shadow:none;
+}
+
+.repeat {
+    display:none;
 }
