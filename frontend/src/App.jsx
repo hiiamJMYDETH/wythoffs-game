@@ -81,7 +81,7 @@ function Game() {
     const rightDiff = lastState.right.length - newRightBalls.length;
 
     if ((leftDiff !== rightDiff) && (leftDiff > 0) && (rightDiff > 0)) {
-      console.warn('Invalid move: Unequal removal from both sides');
+      alert('Invalid move: Unequal removal from both sides');
       return; 
     }
 
