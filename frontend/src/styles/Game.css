@@ -9,8 +9,8 @@
     background-color:grey;
     border:2px solid black;
     padding:10px;
-    width: 450px;
-    height: 325px
+    width: 410px;
+    height: 325px;
 }
 
 .marble {
@@ -35,20 +35,25 @@
     place-items:center;
     min-height:100vh;
     justify-items:center;
+    color: black;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .button {
     background-color:burlywood;
+    color:black;
     border: 1px solid black;
     border-radius: 20px;
     width: 200px;
-    height: 50px;
+    height: 45px;
     font-size:large;
     box-shadow:2px 2px black;
 }
 
 .status {
     background-color:burlywood;
+    color:black;
     border: 1px solid black;
     border-radius: 20px;
     width: 200px;
@@ -56,6 +61,7 @@
     font-size:large;
     place-items:center;
     box-shadow: 2px 2px black;
+    margin: 5px;
 }
 
 .button:hover {
