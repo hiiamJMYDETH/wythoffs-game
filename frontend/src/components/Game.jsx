@@ -14,7 +14,7 @@ function Ball({ value, onBallClick, isSelected }) {
   );
 }
 
-function Counter({isGameOver, setter}) {
+function Counter({isGameOver, setter, maxSeconds}) {
   if (isGameOver) {
     return (
       <div className="status timer" style={{display:'none'}}>
@@ -34,7 +34,7 @@ function Counter({isGameOver, setter}) {
   }, [isGameOver]);
 
   useEffect(() => {
-    if (count >= 600) {
+    if (count >= maxSeconds) {
       setter(true);
     }
   }, [count, setter]);
@@ -87,8 +87,8 @@ function Board({ leftBalls, rightBalls, onBallClick, savedBalls }) {
 
 function Game({numberOfballs, maxSeconds}) {
   const generateInitialState = () => {
-    const half = 20 / 2;
-    const totalBalls = Math.floor(Math.random() * (20 - half) + half);
+    const half = numberOfballs / 2;
+    const totalBalls = Math.floor(Math.random() * (numberOfballs - half) + half);
     return [
       {
         left: Array.from({ length: Math.floor(totalBalls / 2) }, (_, i) => i),
@@ -157,8 +157,11 @@ function Game({numberOfballs, maxSeconds}) {
   if (winner) {
     status = "Winner: " + winner;
   }
-  else {
+  else if (!gameOver) {
     status = "Next player: " + (userIsNext ? "you" : "computer");
+  }
+  else {
+    status = "Out of time";
   }
 
   const moves = history.map((step, move) => {
@@ -192,7 +195,7 @@ function Game({numberOfballs, maxSeconds}) {
         {gameOver ? <p style={{fontWeight: 'bold'}}>Game Over</p> : <p style={{fontWeight: 'bold'}}>Move {currentMove + 1}</p>}
         <p style={{fontWeight: 'bold'}}>{status}</p>
       </div>
-      {gameStart && <Counter isGameOver={gameOver} setter={setGameOver}/>}
+      {gameStart && <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds}/>}
       </div>
       <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
       <button className="button" onClick={handleConfirm}>Confirm Move</button>
