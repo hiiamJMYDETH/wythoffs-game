@@ -8,13 +8,14 @@ function GamePage() {
     const params = new URLSearchParams(location.search);
     const nBalls = params.get("numberOfBalls");
     const nSeconds = params.get("maxSeconds");
+    const CPUPlay = params.get("wCPU");
     function handleExit() {
         navigate("/");
     }
     return (
         <div className="page" style={{backgroundColor: '#fffbe2'}}>
             <button className="button" onClick={handleExit} style={{width:'10px', position: 'absolute'}}>X</button>
-            <Game numberOfballs={nBalls} maxSeconds={nSeconds} />
+            <Game numberOfballs={nBalls} maxSeconds={nSeconds} isCPUPlaying={CPUPlay}/>
         </div> 
     )
 }

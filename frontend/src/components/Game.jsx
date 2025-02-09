@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import CPUPlay from './CPU';
 import "../styles/Game.css";
 
 function Ball({ value, onBallClick, isSelected }) {
@@ -58,15 +59,29 @@ function Counter({isGameOver, setter, maxSeconds}) {
   )
 }
 
+function WarningToggle() {
+  return (
+    <div className="box rule-viol">
+      <h2>You must pick either any amount from one side of the board or 
+      equal amounts from both sides of the board.</h2>
+    </div>
+  )
+}
+
 function GenerateBalls({ balls, onBallClick, savedBalls }) {
+  const isSelected = savedBalls ? (ball) => savedBalls.includes(ball) : () => false;
   return balls.map((ball, i) => (
-    <Ball key={i} value={ball} onBallClick={onBallClick} isSelected={savedBalls.includes(ball)} />
+    <Ball key={i} value={ball} onBallClick={onBallClick} isSelected={isSelected(ball)} />
   ));
 }
 
-function calculateWinner(leftBalls, rightBalls, isUser) {
+function calculateWinner(leftBalls, rightBalls, isUser, isCPUPlaying) {
+  let opponent = "Other player";
   if (leftBalls === 0 && rightBalls === 0) {
-    return isUser ? "Computer" : "You";
+    if (isCPUPlaying) {
+      opponent = "Computer";
+    }
+    return isUser ? opponent : "You";
   }
   return null
 }
@@ -85,7 +100,7 @@ function Board({ leftBalls, rightBalls, onBallClick, savedBalls }) {
   );
 }
 
-function Game({numberOfballs, maxSeconds}) {
+function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
   const generateInitialState = () => {
     const half = numberOfballs / 2;
     const totalBalls = Math.floor(Math.random() * (numberOfballs - half) + half);
@@ -102,7 +117,13 @@ function Game({numberOfballs, maxSeconds}) {
   const [currentMove, setCurrentMove] = useState(0);
   const [gameOver, setGameOver] = useState(false); 
   const [gameStart, setGameStart] = useState(false);
+  const [ruleViolation, setRuleViolation] = useState(false);
   const userIsNext = currentMove % 2 === 0;
+
+  // If available, fix this so that the user turn is random. It means
+  // that the user must manually be reset every move.
+  // const [userIsNext, setUserIsNext] = useState(Math.floor());
+  // Also, no need to set the current move after every turn (user can review them in a different section with an account)
 
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
@@ -120,7 +141,7 @@ function Game({numberOfballs, maxSeconds}) {
 
   function handleConfirm() {
     if (savedBalls.length === 0) return; 
-
+    
 
     const lastState = history[currentMove];
     const newLeftBalls = lastState.left.filter(b => !savedBalls.includes(b));
@@ -130,7 +151,11 @@ function Game({numberOfballs, maxSeconds}) {
     const rightDiff = lastState.right.length - newRightBalls.length;
 
     if ((leftDiff !== rightDiff) && (leftDiff > 0) && (rightDiff > 0)) {
-      alert('Invalid move: Unequal removal from both sides');
+      // alert('Invalid move: Unequal removal from both sides');
+      setRuleViolation(true);
+      setTimeout(() => {
+        setRuleViolation(false);
+      }, 2000);
       return; 
     }
 
@@ -152,8 +177,23 @@ function Game({numberOfballs, maxSeconds}) {
     setCurrentMove(nextMove);
   }
 
+  useEffect(() => {
+    if (!userIsNext && isCPUPlaying) {
+      const ballsToSave = CPUPlay(history[currentMove])
+      setSavedBalls(ballsToSave);
+      handleConfirm();
+    }
+  }, [userIsNext, history, currentMove]);
+
+  useEffect(() => {
+    if (userIsNext) return;
+    if (savedBalls && savedBalls.length > 0) {
+      handleConfirm();
+    }
+  }, [savedBalls])
+
   let status;
-  const winner = calculateWinner(leftBalls.length, rightBalls.length, userIsNext);
+  const winner = calculateWinner(leftBalls.length, rightBalls.length, userIsNext, isCPUPlaying);
   if (winner) {
     status = "Winner: " + winner;
   }
@@ -195,6 +235,7 @@ function Game({numberOfballs, maxSeconds}) {
         {gameOver ? <p style={{fontWeight: 'bold'}}>Game Over</p> : <p style={{fontWeight: 'bold'}}>Move {currentMove + 1}</p>}
         <p style={{fontWeight: 'bold'}}>{status}</p>
       </div>
+      {ruleViolation && <WarningToggle />}
       {gameStart && <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds}/>}
       </div>
       <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
