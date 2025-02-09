@@ -37,9 +37,17 @@
     top: 50%;
     left: 50%;
     transform:translate(-50%, -50%);
+    padding: 10px;
+    font-size:large;
+    place-items:center;
+    box-shadow:5px 5px black;
 }
 
 .button:hover {
     transform: translate(2px, 2px);
     box-shadow:none;
+}
+
+.settings-text {
+    margin: 0 auto;
 }

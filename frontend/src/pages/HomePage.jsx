@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
 
 function HomePage() {
@@ -12,7 +12,7 @@ function HomePage() {
         const seconds = document.querySelector('.seconds');
         if (!minutes || !seconds) return;
         const totalSeconds = parseInt(minutes.value) * 60 + parseInt(seconds.value);
-        navigate(`/game?numberOfBalls=${numberOfBalls}&maxSeconds=${totalSeconds}`);
+        navigate(`/game?numberOfBalls=${numberOfBalls}&maxSeconds=${totalSeconds}&wCPU=true`);
     }
 
     function gameSetToggle() {
@@ -27,9 +27,6 @@ function HomePage() {
         slider.addEventListener("click", function() {
             setNumberOfballs(slider.value);
         });
-        // minutes.addEventListener("click", function() {
-        //     setMaxSeconds()
-        // });
     });
 
     return (
@@ -44,16 +41,16 @@ function HomePage() {
             </div>
             {gameSettingsBox && (
             <div className="box game-settings">
-                <p>Max Number of Balls in Game</p>
+                <h3 className="settings-text">Max Number of Balls in Game</h3>
                 <div className="slider-container" style={{ display: "flex" }}>
                     <input type="range" min="10" max="20" className="slider" step="2" defaultValue="20" />
-                    <h2>{numberOfBalls}</h2>
+                    <h3 className="settings-text">{numberOfBalls}</h3>
                 </div>
                 <div className="time-container" style={{display: "flex"}}>
                     <input type="number" className="minutes" min="1" max="60" defaultValue="10" style={{backgroundColor:"white", color:"black"}}/>
-                    <p>Minutes</p>
+                    <h3 className="settings-text">Minutes</h3>
                     <input type="number" className="seconds" min="0" max="60" defaultValue="0" style={{backgroundColor:"white", color:"black"}}/>
-                    <p>Seconds</p>
+                    <h3 className="settings-text">Seconds</h3>
                 </div>
                 <button className="button" onClick={handleGame}>Start Game</button>
                 <button className="button" onClick={()=>setGameSettingsBox(false)}>Exit</button>
