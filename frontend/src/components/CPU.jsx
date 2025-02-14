@@ -20,6 +20,7 @@ function CPUPlay(board) {
             max = j;
         }
     }
+    console.log("deck", map);
     return map[max]; 
 }
 

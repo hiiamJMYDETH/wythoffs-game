@@ -1,63 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Board from "./Board";
 import CPUPlay from './CPU';
+import {Counter} from "./utilities.jsx";
 import "../styles/Game.css";
 
-function Ball({ value, onBallClick, isSelected }) {
-  return (
-    <svg
-      data-ball-id={value}
-      className={`marble ${isSelected ? 'selected' : ''}`}
-      onClick={() => onBallClick(value)}
-    >
-      <circle cx="8" cy="8" r="8" fill="black" />
-      {value}
-    </svg>
-  );
+function setMaxHeight(leftBalls, rightBalls) {
+  return '325';
 }
 
-function Counter({isGameOver, setter, maxSeconds}) {
-  if (isGameOver) {
-    return (
-      <div className="status timer" style={{display:'none'}}>
-      <p style={{margin:'0px'}}> Results: </p>
-      </div>
-    )
-  }
-  const [count, setCount] = useState(0);
+const generateInitialState = (numberOfBalls) => {
+  const half = numberOfBalls / 2;
 
-  useEffect(() => {
-    if (isGameOver) return;
-    const intervalId = setInterval(() => {
-      setCount(prev => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [isGameOver]);
-
-  useEffect(() => {
-    if (count >= maxSeconds) {
-      setter(true);
-    }
-  }, [count, setter]);
-
-  let min = Math.floor(count / 60);
-  let tempSeconds = count - (min * 60);
-  let seconds = tempSeconds > 9 ? tempSeconds : '0' + tempSeconds;
-
-  if (isGameOver) {
-    return (
-      <div className="status timer" style={{fontSize: '35px', justifySelf:'center'}}>
-      <p> Out of time </p>
-      </div>
-    )
+  let leftCount, rightCount;
+  const isLeftLarger = Math.random() < 0.5;
+  if (isLeftLarger) {
+    leftCount = Math.floor(Math.random() * (numberOfBalls - half) + half);
+    rightCount = numberOfBalls - leftCount;
+  } else {
+    rightCount = Math.floor(Math.random() * (numberOfBalls - half) + half);
+    leftCount = numberOfBalls - rightCount;
   }
 
-  return (
-    <div className="status timer" style={{fontSize: '70px', fontWeight: 'bold', justifySelf:'center'}}>
-    <p style={{margin:'0px'}}> {min + ":" + seconds} </p>
-    </div>
-  )
-}
+  return [
+    {
+      left: Array.from({ length: leftCount }, (_, i) => i),
+      right: Array.from({ length: rightCount }, (_, i) => i + leftCount),
+    },
+  ];
+};
 
 function WarningToggle() {
   return (
@@ -66,13 +36,6 @@ function WarningToggle() {
       equal amounts from both sides of the board.</h2>
     </div>
   )
-}
-
-function GenerateBalls({ balls, onBallClick, savedBalls }) {
-  const isSelected = savedBalls ? (ball) => savedBalls.includes(ball) : () => false;
-  return balls.map((ball, i) => (
-    <Ball key={i} value={ball} onBallClick={onBallClick} isSelected={isSelected(ball)} />
-  ));
 }
 
 function calculateWinner(leftBalls, rightBalls, isUser, isCPUPlaying) {
@@ -87,32 +50,9 @@ function calculateWinner(leftBalls, rightBalls, isUser, isCPUPlaying) {
 }
 
 
-function Board({ leftBalls, rightBalls, onBallClick, savedBalls }) {
-  return (
-    <div className="board">
-      <div className="half-board">
-        <GenerateBalls balls={leftBalls} onBallClick={onBallClick} savedBalls={savedBalls} />
-      </div>
-      <div className="half-board">
-        <GenerateBalls balls={rightBalls} onBallClick={onBallClick} savedBalls={savedBalls} />
-      </div>
-    </div>
-  );
-}
-
-function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
-  const generateInitialState = () => {
-    const half = numberOfballs / 2;
-    const totalBalls = Math.floor(Math.random() * (numberOfballs - half) + half);
-    return [
-      {
-        left: Array.from({ length: Math.floor(totalBalls / 2) }, (_, i) => i),
-        right: Array.from({ length: totalBalls - Math.floor(totalBalls / 2) }, (_, i) => i + Math.floor(totalBalls / 2)),
-      },
-    ];
-  };
-
-  const [history, setHistory] = useState(generateInitialState());
+function Game({numberOfballs, maxSeconds, isCPUPlaying, developerMode=false}) {
+  const gameInfo = useRef();
+  const [history, setHistory] = useState(generateInitialState(numberOfballs));
   const [savedBalls, setSavedBalls] = useState([]);
   const [currentMove, setCurrentMove] = useState(0);
   const [gameOver, setGameOver] = useState(false); 
@@ -127,6 +67,8 @@ function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
 
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
+
+  const maxHeight = `${setMaxHeight(history[0].left.length, history[0].right.length)}px`;
 
   function handleBallClick(ball) {
     if (!gameStart) {
@@ -151,7 +93,6 @@ function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
     const rightDiff = lastState.right.length - newRightBalls.length;
 
     if ((leftDiff !== rightDiff) && (leftDiff > 0) && (rightDiff > 0)) {
-      // alert('Invalid move: Unequal removal from both sides');
       setRuleViolation(true);
       setTimeout(() => {
         setRuleViolation(false);
@@ -179,6 +120,7 @@ function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
 
   useEffect(() => {
     if (!userIsNext && isCPUPlaying) {
+      console.log("is CPU playing?", isCPUPlaying);
       const ballsToSave = CPUPlay(history[currentMove])
       setSavedBalls(ballsToSave);
       handleConfirm();
@@ -186,19 +128,20 @@ function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
   }, [userIsNext, history, currentMove]);
 
   useEffect(() => {
-    if (userIsNext) return;
+    if (userIsNext || !isCPUPlaying) return;
     if (savedBalls && savedBalls.length > 0) {
       handleConfirm();
     }
   }, [savedBalls])
 
   let status;
+  let opponent = isCPUPlaying ? "computer" : "opponent";
   const winner = calculateWinner(leftBalls.length, rightBalls.length, userIsNext, isCPUPlaying);
   if (winner) {
     status = "Winner: " + winner;
   }
   else if (!gameOver) {
-    status = "Next player: " + (userIsNext ? "you" : "computer");
+    status = "Next player: " + (userIsNext ? "you" : opponent);
   }
   else {
     status = "Out of time";
@@ -219,8 +162,12 @@ function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
     )
   });
 
+  useEffect(() => {
+    handleRestart();
+  }, [isCPUPlaying]);
+  
   function handleRestart() {
-    setHistory(generateInitialState());
+    setHistory(generateInitialState(numberOfballs));
     setSavedBalls([]);
     setCurrentMove(0);
     setGameOver(false); 
@@ -229,21 +176,23 @@ function Game({numberOfballs, maxSeconds, isCPUPlaying}) {
 
 
   return (
-    <div className="game">
-      <div style={{display:'flex'}}>      
-      <div className="status" style={{width: '200px'}}>
-        {gameOver ? <p style={{fontWeight: 'bold'}}>Game Over</p> : <p style={{fontWeight: 'bold'}}>Move {currentMove + 1}</p>}
-        <p style={{fontWeight: 'bold'}}>{status}</p>
+    <div className="box">
+      <div className="game">
+      <div className="status" style={{display:'flex', gap: '168px', padding:'10px', width:'640px', height:'100px'}}>
+          <p style={{fontWeight: 'bold'}}>Player</p>
+          <p style={{fontWeight: 'bold'}}>{opponent}</p>
+          <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart}/>
       </div>
       {ruleViolation && <WarningToggle />}
-      {gameStart && <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds}/>}
-      </div>
-      <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
-      <button className="button" onClick={handleConfirm}>Confirm Move</button>
+      <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} maxHeight={maxHeight}/>
+      <br/>
+      {!gameOver && (<button className="button" onClick={handleConfirm}>Confirm Move</button>) }
       {gameOver && (
         <button className="button" onClick={handleRestart}>Restart Game</button>
       )}
-      <div className="game-info" style={{display:'none'}}>
+      </div>
+      <div className="status" ref={gameInfo}>
+        <p style={{fontWeight: 'bold'}}>{status}</p>
         <ol>{moves}</ol>
       </div>
     </div>

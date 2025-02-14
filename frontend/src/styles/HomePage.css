@@ -14,22 +14,14 @@
 }
 
 .button {
-    background-color:burlywood;
-    color:black;
-    border: 1px solid black;
-    border-radius: 20px;
-    width: 200px;
-    height: 45px;
-    font-size:large;
-    box-shadow:2px 2px black;
-    margin: 5px;
+    background-color:#FF0090;
+    color:white;
+    margin-bottom: 5px;
 }
 
 .box {
-    background-color:burlywood;
-    border: 1px solid black;
-    border-radius: 20px;
-    display:grid;
+    display:flex;
+    padding: 10px;
 }
 
 .game-settings {
@@ -44,8 +36,7 @@
 }
 
 .button:hover {
-    transform: translate(2px, 2px);
-    box-shadow:none;
+    box-shadow:0 0 2px 2px white;
 }
 
 .settings-text {
