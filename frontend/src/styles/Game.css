@@ -74,12 +74,14 @@
 
 @media (max-width: 768px) {
     .board {
-        flex-direction: column;
-        align-items:center;
+        display:flex;
+        flex-direction:row;
+        height:100%;
     }
 
     .half-board {
-        min-height: 250px;
+        min-height: 100px;
+        width: 150px;
     }
     .timer-status {
         display:grid;
@@ -87,5 +89,8 @@
     .marble {
         width: clamp(30px, 8vw, 50px);
         height: clamp(30px, 8vw, 50px);
+    }
+    .status {
+        width: auto;
     }
 }

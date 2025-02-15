@@ -1,13 +1,30 @@
 import "../styles/Game.css";
 import { useEffect, useState } from "react";
 
+function useMobileDetect() {
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+    useEffect(() => {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth <= 768);
+      };
+  
+      window.addEventListener("resize", handleResize);
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }, []);
+  
+    return isMobile;
+  }
+
 function handleClick(id, navigate) {
     if (id === "home") {
         navigate('/');
         return;
     }
     if (id === "play") {
-        navigate('/');
+        navigate('/play');
         return;
     }
     if (id === "play-CPU") {
@@ -67,4 +84,4 @@ function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
   )
 }
 
-export {Counter, handleClick};
+export {useMobileDetect, Counter, handleClick};
