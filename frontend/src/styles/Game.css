@@ -1,0 +1,96 @@
+.board {
+    display:flex;
+    flex-wrap: wrap;
+    background-color:rgb(192, 168, 132);
+    justify-content: center;
+}
+
+.half-board {
+    padding:10px;
+    width: clamp(186px, 45vw, 310px);
+    min-height: 325px;
+    overflow: auto; 
+    transition: height 0.3s ease-in-out;
+}
+
+.rule-viol {
+    border:5px solid black;
+    background-color: burlywood;
+}
+
+.marble {
+    background-color:rgb(17, 63, 41);
+    border:1px solid black;
+    border-radius:100%;
+    width: clamp(40px, 10vw, 50px);
+    height: clamp(40px, 10vw, 50px);
+    box-shadow: 2px 2px black;
+}
+
+.timer-status {
+    display: flex;
+}
+
+.marble:hover{
+    box-shadow: 5px 5px 5px 0 black;
+    opacity:50%;
+}
+
+.selected {
+    box-shadow: 0 0 5px 5px greenyellow;
+}
+
+.game {
+    display:grid;
+    place-items:center;
+    justify-items:center;
+    color: black;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.status {
+    background-color:burlywood;
+    color:black;
+    font-size:large;
+    place-items:center;
+    margin: 5px;
+    padding: 5px;
+}
+
+.repeat {
+    display:none;
+}
+
+.rule-viol {
+    position:absolute;
+    top: 50%;
+    place-self:center;
+    margin: 0 auto;
+    right: 25%;
+    left: 25%;
+    box-shadow: 2px 2px black;
+}
+
+@media (max-width: 768px) {
+    .board {
+        display:flex;
+        flex-direction:row;
+        height:100%;
+    }
+
+    .half-board {
+        min-height: 100px;
+        width: 150px;
+    }
+    .timer-status {
+        display:grid;
+    }
+    .marble {
+        width: clamp(30px, 8vw, 50px);
+        height: clamp(30px, 8vw, 50px);
+    }
+    .status {
+        width: auto;
+    }
+}
