@@ -1,14 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Only enable HMR if not in production
-const isDev = process.env.NODE_ENV === 'development';
-
 export default defineConfig({
   plugins: [react()],
-  base: '/',  // Adjust base URL for static assets
+  base: '',  // Leave it as empty to avoid unnecessary path issues
   build: {
-    outDir: 'dist',
+    outDir: 'dist',  // Ensure this points to "frontend/dist"
     assetsDir: 'assets',
     rollupOptions: {
       output: {
@@ -17,8 +14,5 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
       },
     },
-  },
-  server: {
-    hmr: isDev, // Enable HMR only for local development
   },
 });
