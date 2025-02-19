@@ -1,10 +1,12 @@
 import { fetching, useMobileDetect, handleClick } from "../components/utilities.jsx";
+import { useNavigate } from "react-router-dom";
 import SideBar from "../components/SideBar.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Board from "../components/Board.jsx";
 import "../styles/page.css";
 
 function HomePage() {
+    const navigate = useNavigate();
     const isMobile = useMobileDetect();
     fetching().then((message) => {
         console.log('Message from API:', message);
