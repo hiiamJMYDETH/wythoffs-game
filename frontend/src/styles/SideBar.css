@@ -3,6 +3,9 @@
     display:flex;
     flex-direction:row;
     height:100vh;
+    background-color:white;
+    filter: brightness(80%);
+    z-index: 100;
 }
 
 .menu-bar {
@@ -11,8 +14,6 @@
     height: 100%; 
     width: 100%; 
 }
-
-
 
 .button.menu-btn {
     border: 0;
