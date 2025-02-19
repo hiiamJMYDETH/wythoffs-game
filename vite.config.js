@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: '',  // Leave it as empty to avoid unnecessary path issues
   build: {
-    outDir: 'dist',  // Ensure this points to "frontend/dist"
+    outDir: 'frontend/dist',  // Ensure this points to "frontend/dist"
     assetsDir: 'assets',
     rollupOptions: {
       output: {
