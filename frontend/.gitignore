@@ -22,4 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+<<<<<<< HEAD
 frontend/src/assets
+=======
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -28,3 +29,8 @@ tasks.txt
 hoggatt.pdf
 
 /inspo
+=======
+.vercel
+.env
+node_modules
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236

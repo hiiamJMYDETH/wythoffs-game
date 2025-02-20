@@ -1,0 +1,7 @@
+1. Make a postgreSQL database containing the username, email, password, win-loss ratio, number of games played, number of wins, and number of losses. (kinda done, but got the api to connect with the frontend)
+2. Test multiplayer modes
+3. Make Login and Signup Pages
+4. set a separate class that determines the background of stuff, with the exception of the marbles
+5. modify the CPU algorithm to have several modes. One is the 
+(I've just known the rules and take the most) and the optimal winning strat
+6. Have the game reflect on the set settings because they remained the same for some reason.
