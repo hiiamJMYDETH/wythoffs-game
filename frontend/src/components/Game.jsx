@@ -5,8 +5,44 @@ import { Counter, useMobileDetect } from "./utilities.jsx";
 import "../styles/Game.css";
 import "../styles/page.css";
 
-function setMaxHeight(leftBalls, rightBalls) {
-  return '325';
+function GameSettings({changeSettings}) {
+  const [nBalls, setNBalls] = useState(20);
+  function handleGame() {
+    const minutes = document.querySelector('.minutes');
+    const seconds = document.querySelector('.seconds');
+    if (!minutes || !seconds) return;
+    const totalSeconds = parseInt(minutes.value) * 60 + parseInt(seconds.value);
+    changeSettings(totalSeconds, nBalls);
+  }
+
+  useEffect(() => {
+    const slider = document.querySelector('.slider');
+    if (!slider) return;
+    slider.addEventListener('click', function() {
+      setNBalls(slider.value);
+    });
+    slider.addEventListener('touchend', function() {
+      setNBalls(slider.value);
+    })
+  }, [nBalls])
+
+  return (
+    <div className="box">
+      <p className="settings-text">Max Number of Balls in Game</p>
+      <div className="slider-container" style={{ display: "flex" }}>
+        <input type="range" min="10" max="20" className="slider" step="2" defaultValue="20" />
+        <h3 className="settings-text" style={{margin: '0 auto'}}>{nBalls}</h3>
+      </div>
+      <br/>
+      <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
+        <input type="number" className="minutes" min="1" max="60" defaultValue="10" />
+        <h3 className="settings-text">:</h3>
+        <input type="number" className="seconds" min="0" max="60" defaultValue="0" />
+      </div>
+      <br />
+      <button className="button" onClick={handleGame}>Restart Game</button>
+    </div>
+  )
 }
 
 const generateInitialState = (numberOfBalls) => {
@@ -51,15 +87,18 @@ function calculateWinner(leftBalls, rightBalls, isUser, isCPUPlaying) {
 }
 
 
-function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
+function Game({ isCPUPlaying }) {
   const isMobile = useMobileDetect();
   const gameInfo = useRef();
+  const [numberOfballs, setNumberOfballs] = useState(20);
+  const [maxSeconds, setMaxSeconds] = useState(60);
   const [history, setHistory] = useState(generateInitialState(numberOfballs));
   const [savedBalls, setSavedBalls] = useState([]);
   const [currentMove, setCurrentMove] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [gameStart, setGameStart] = useState(false);
   const [ruleViolation, setRuleViolation] = useState(false);
+  const [gameSettings, setGameSettings] = useState(false);
   const userIsNext = currentMove % 2 === 0;
 
   // If available, fix this so that the user turn is random. It means
@@ -70,13 +109,11 @@ function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
 
-  const maxHeight = `${setMaxHeight(history[0].left.length, history[0].right.length)}px`;
-
   function handleBallClick(ball) {
     if (!gameStart) {
       setGameStart(true);
     }
-    if (gameOver || history.length != currentMove + 1) return;
+    if (gameOver || history.length != currentMove + 1 || gameSettings) return;
     setSavedBalls(prev =>
       prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
     );
@@ -84,7 +121,7 @@ function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
 
 
   function handleConfirm() {
-    if (savedBalls.length === 0) return;
+    if (savedBalls.length === 0 || gameSettings) return;
 
 
     const lastState = history[currentMove];
@@ -116,6 +153,7 @@ function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
     }
   }
 
+
   function jumpTo(nextMove) {
     setCurrentMove(nextMove);
   }
@@ -146,7 +184,7 @@ function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
     status = "Next player: " + (userIsNext ? "you" : opponent);
   }
   else {
-    status = "Out of time";
+    status = "Game Over";
   }
 
   const moves = history.map((step, move) => {
@@ -168,41 +206,49 @@ function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
     handleRestart();
   }, [isCPUPlaying]);
 
+  function changeSettings(totalSeconds, nBalls) {
+    setNumberOfballs(nBalls);
+    setMaxSeconds(totalSeconds);
+    handleRestart();
+  }
+
   function handleRestart() {
     setHistory(generateInitialState(numberOfballs));
     setSavedBalls([]);
     setCurrentMove(0);
     setGameOver(false);
     setGameStart(false);
+    setMaxSeconds(maxSeconds);
   }
 
 
   return (
     <>
       {isMobile ? (
-        <div className="box">
+        <>
           <div className="game">
             <div className="status" style={{ display: 'flex', backgroundColor: 'transparent' }}>
               <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
             </div >
-            {ruleViolation && <WarningToggle />
-            }
-            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} maxHeight={maxHeight} />
+            {ruleViolation && <WarningToggle />}
+            {gameSettings && <GameSettings />}
+            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
             <br />
-            {!gameOver && (<button className="button" onClick={handleConfirm}>Confirm Move</button>)}
+            {!gameOver && (<button className="button main" onClick={handleConfirm}>Confirm Move</button>)}
             {
               gameOver && (
-                <button className="button" onClick={handleRestart}>Restart Game</button>
+                <button className="button main" onClick={handleRestart}>Restart Game</button>
               )
             }
             <div className="status" ref={gameInfo}>
+              <button className="button" onClick={() => setGameSettings(!gameSettings)}>Game Settings</button>
               <p style={{ fontWeight: 'bold' }}>{status}</p>
               <ol>{moves}</ol>
             </div>
           </div>
-        </div>
+        </>
       ) : (
-        <div className="box">
+        <div style={{ display: 'flex' }}>
           <div className="game">
             <div className="status" style={{ display: 'flex', gap: '168px', padding: '10px', width: '640px', height: '100px', backgroundColor: 'transparent' }}>
               <p style={{ fontWeight: 'bold' }}>Player</p>
@@ -211,20 +257,26 @@ function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
             </div >
             {ruleViolation && <WarningToggle />
             }
-            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} maxHeight={maxHeight} />
+            {gameSettings && <GameSettings changeSettings={changeSettings}/>}
+            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
             <br />
-            {!gameOver && (<button className="button" onClick={handleConfirm}>Confirm Move</button>)}
+            {!gameOver && (<button className="button main" onClick={handleConfirm}>Confirm Move</button>)}
             {
               gameOver && (
-                <button className="button" onClick={handleRestart}>Restart Game</button>
+                <button className="button main" onClick={handleRestart}>Restart Game</button>
               )
             }
           </div >
           <div className="status" ref={gameInfo}>
-            <p style={{ fontWeight: 'bold' }}>{status}</p>
-            <ol>{moves}</ol>
+            <div style={{ justifyItems: 'center' }}>
+              <p style={{ fontWeight: 'bold' }}>{status}</p>
+              <ol>{moves}</ol>
+            </div>
+            <div style={{ position: 'absolute', bottom: '0', margin: '5px', justifyContent: 'center' }}>
+              <button className="button" onClick={() => setGameSettings(!gameSettings)}>Game Settings</button>
+            </div>
           </div>
-        </div >
+        </div>
       )}
     </>
   );
