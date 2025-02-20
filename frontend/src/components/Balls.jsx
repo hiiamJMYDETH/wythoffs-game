@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import "../styles/Game.css";
 import {useRef, useEffect} from "react";
+=======
+import {useRef, useEffect} from "react";
+import "../styles/Game.css";
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236
 
 function Ball({ value, onBallClick, isSelected }) {
   const ballRef = useRef(null);

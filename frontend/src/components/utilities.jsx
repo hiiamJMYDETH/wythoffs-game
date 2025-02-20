@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import "../styles/Game.css";
+=======
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236
 import { useEffect, useState } from "react";
 
 function useMobileDetect() {
@@ -28,11 +31,19 @@ function handleClick(id, navigate) {
         return;
     }
     if (id === "play-CPU") {
+<<<<<<< HEAD
         navigate('/play?wCPU=true&hasStarted=false');
         return;
     }
     if (id === "play-noCPU") {
         navigate('/play?wCPU=false&hasStarted=false');
+=======
+        navigate('/play/computer');
+        return;
+    }
+    if (id === "play-noCPU") {
+        navigate('/play/online');
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236
         return;
     }
 }
@@ -84,4 +95,39 @@ function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
   )
 }
 
+<<<<<<< HEAD
 export {useMobileDetect, Counter, handleClick};
+=======
+async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {  
+  let apiUrl = import.meta.env.VITE_API_URL || `http://localhost:3000/api`;
+
+
+  const options = {
+    method: reqMethod,  
+    headers: {
+      'Content-Type': 'application/json',  
+    },
+  };
+
+  if (reqMethod === 'POST' || reqMethod === 'PUT') {
+    options.body = JSON.stringify({ data: `${reqData}` });  
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/${req}`, options);  
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.message || 'No message received'; 
+    } else {
+      return `API request failed: ${response.status} ${response.statusText}`;
+    }
+  } catch (error) {
+    return `Fetch error: ${error.message}`;
+  }
+}
+
+  
+
+  export {useMobileDetect, Counter, handleClick, fetching};
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236

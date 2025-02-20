@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "wythoff-game",
   "version": "0.1.0",
   "private": true,
@@ -39,5 +40,30 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+=======
+  "name": "wythoffs-game",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cd frontend && npm install && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hiiamJMYDETH/wythoffs-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hiiamJMYDETH/wythoffs-game/issues"
+  },
+  "homepage": "https://github.com/hiiamJMYDETH/wythoffs-game#readme",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.3"
+>>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   }
 }
