@@ -27,11 +27,11 @@ function handleClick(id, navigate) {
         return;
     }
     if (id === "play-CPU") {
-        navigate('/play?wCPU=true&hasStarted=false');
+        navigate('/play/computer');
         return;
     }
     if (id === "play-noCPU") {
-        navigate('/play?wCPU=false&hasStarted=false');
+        navigate('/play/online');
         return;
     }
 }
@@ -83,20 +83,35 @@ function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
   )
 }
 
-async function fetching() {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    try {
-      const response = await fetch(`${apiUrl}/hello`);
-      if (response.ok) {
-        const data = await response.json();
-        return data.message || 'No message received'; // Return the message
-      } else {
-        return `API request failed: ${response.status} ${response.statusText}`;
-      }
-    } catch (error) {
-      return `Fetch error: ${error.message}`;
-    }
+async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {  
+  let apiUrl = import.meta.env.VITE_API_URL || `http://localhost:3000/api`;
+
+
+  const options = {
+    method: reqMethod,  
+    headers: {
+      'Content-Type': 'application/json',  
+    },
+  };
+
+  if (reqMethod === 'POST' || reqMethod === 'PUT') {
+    options.body = JSON.stringify({ data: `${reqData}` });  
   }
+
+  try {
+    const response = await fetch(`${apiUrl}/${req}`, options);  
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.message || 'No message received'; 
+    } else {
+      return `API request failed: ${response.status} ${response.statusText}`;
+    }
+  } catch (error) {
+    return `Fetch error: ${error.message}`;
+  }
+}
+
   
 
   export {useMobileDetect, Counter, handleClick, fetching};

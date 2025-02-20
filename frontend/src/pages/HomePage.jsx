@@ -8,7 +8,7 @@ import "../styles/page.css";
 function HomePage() {
     const navigate = useNavigate();
     const isMobile = useMobileDetect();
-    fetching().then((message) => {
+    fetching('users').then((message) => {
         console.log('Message from API:', message);
     });
     return (
@@ -43,7 +43,6 @@ function HomePage() {
                                 leftBalls={[0, 1, 2, 3, 4, 5, 6, 7, 8]}
                                 rightBalls={[9, 10, 11, 12, 13, 14, 15]}
                                 onBallClick={null} savedBalls={[]}
-                                maxHeight={'325px'}
                             />
                             <div style={{ padding: '10px' }}>
                                 <h2>Welcome to Wythoff's Game Online</h2>
@@ -59,6 +58,7 @@ function HomePage() {
                                 </div>
                             </div>
                         </div>
+                        <p style={{ position: 'absolute', bottom: '0' }}>@2025 Wythoff's Game Online</p>
                     </div>
                 </>
             )}

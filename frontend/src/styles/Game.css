@@ -15,10 +15,20 @@
     transition: height 0.3s ease-in-out;
 }
 
-.rule-viol {
+.box {
+    position:absolute;
     background-color:white;
     border:5px solid black;
     z-index: 100;
+    padding: 10px;
+    justify-content:space-between;
+    border-radius: 10px;
+}
+
+.minutes.seconds {
+    min-width: 100px;
+    min-height:50px;
+    font-size: large;
 }
 
 .marble {
@@ -57,9 +67,11 @@
     filter: brightness(70%);
     color:black;
     font-size:large;
-    place-items:center;
+    justify-items:space-around;
     margin: 5px;
     padding: 5px;
+    min-width:200px;
+    border-radius:10px
 }
 
 .repeat {
@@ -96,5 +108,11 @@
     }
     .status {
         width: auto;
+    }
+}
+
+@media (max-width: 1083px) {
+    .half-board {
+        width:150px;
     }
 }
