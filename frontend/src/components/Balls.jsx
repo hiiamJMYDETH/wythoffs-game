@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-import "../styles/Game.css";
-import {useRef, useEffect} from "react";
-=======
 import {useRef, useEffect} from "react";
 import "../styles/Game.css";
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
+import MarbleImage from "../assets/Marble.svg";
 
 function Ball({ value, onBallClick, isSelected }) {
   const ballRef = useRef(null);
@@ -26,14 +22,13 @@ function Ball({ value, onBallClick, isSelected }) {
   }, [onBallClick, value]);
 
   return (
-    <svg
+    <img
       ref={ballRef}
       className={`marble ${isSelected ? "selected" : ""}`}
       onClick={() => onBallClick(value)}
-    >
-      <circle cx="4" cy="4" r="4" fill="black" />
-      {value}
-    </svg>
+      src={MarbleImage}
+      alt="Marble"
+    />
   );
 }
 

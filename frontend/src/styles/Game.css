@@ -1,30 +1,20 @@
 .board {
     display:flex;
     flex-wrap: wrap;
-<<<<<<< HEAD
-    background-color:rgb(192, 168, 132);
-    justify-content: center;
-=======
     background-color:white;
     filter: brightness(70%);
     justify-content: center;
     border-radius:10px;
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
 }
 
 .half-board {
     padding:10px;
     width: clamp(186px, 45vw, 310px);
-    min-height: 325px;
+    height: clamp(325px, 60vh, 500px);
     overflow: auto; 
     transition: height 0.3s ease-in-out;
 }
 
-<<<<<<< HEAD
-.rule-viol {
-    border:5px solid black;
-    background-color: burlywood;
-=======
 .box {
     position:absolute;
     background-color:white;
@@ -35,19 +25,18 @@
     border-radius: 10px;
 }
 
-.minutes.seconds {
-    min-width: 100px;
-    min-height:50px;
-    font-size: large;
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
+input[type="number"] {
+    width: 80px;
+    height: 60px;
+    font-size: 2rem;
+    text-align: center;
+    border-radius: 12px;
 }
 
 .marble {
-    background-color:rgb(17, 63, 41);
-    border:1px solid black;
     border-radius:100%;
-    width: clamp(40px, 10vw, 50px);
-    height: clamp(40px, 10vw, 50px);
+    width: clamp(40px, 10vw, 70px);
+    height: clamp(40px, 10vw, 70px);
     box-shadow: 2px 2px black;
 }
 
@@ -74,24 +63,15 @@
 }
 
 .status {
-<<<<<<< HEAD
-    background-color:burlywood;
+    background-color:rgb(175, 175, 175);
     color:black;
     font-size:large;
-    place-items:center;
-    margin: 5px;
-    padding: 5px;
-=======
-    background-color:white;
-    filter: brightness(70%);
-    color:black;
-    font-size:large;
-    justify-items:space-around;
-    margin: 5px;
+    justify-items:center;
+    margin-left: 5px;
     padding: 5px;
     min-width:200px;
-    border-radius:10px
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
+    border-radius:10px;
+    min-height:100px;
 }
 
 .repeat {
@@ -123,19 +103,16 @@
         display:grid;
     }
     .marble {
-        width: clamp(30px, 8vw, 50px);
-        height: clamp(30px, 8vw, 50px);
+        width: 50px;
+        height: 50px;
     }
     .status {
         width: auto;
     }
-<<<<<<< HEAD
-=======
 }
 
 @media (max-width: 1083px) {
     .half-board {
         width:150px;
     }
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
 }

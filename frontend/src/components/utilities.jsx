@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-import "../styles/Game.css";
-=======
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
 import { useEffect, useState } from "react";
 
 function useMobileDetect() {
@@ -31,20 +27,24 @@ function handleClick(id, navigate) {
         return;
     }
     if (id === "play-CPU") {
-<<<<<<< HEAD
-        navigate('/play?wCPU=true&hasStarted=false');
-        return;
-    }
-    if (id === "play-noCPU") {
-        navigate('/play?wCPU=false&hasStarted=false');
-=======
         navigate('/play/computer');
         return;
     }
     if (id === "play-noCPU") {
         navigate('/play/online');
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
         return;
+    }
+    if (id === "settings") {
+      navigate('/settings');
+      return;
+    }
+    if (id === "login") {
+      navigate('/login');
+      return;
+    }
+    if (id === "signup") {
+      navigate('/signup');
+      return;
     }
 }
 
@@ -89,15 +89,16 @@ function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
   }
 
   return (
-    <div className="timer" style={{fontSize: '70px', fontWeight: 'bold', justifySelf:'center'}}>
-    <p style={{margin:'0px'}}> {min + ":" + seconds} </p>
+    <div className="timer" style={{
+      justifySelf:'center',
+      fontWeight: 'bold',
+      marginRight:'10px'
+    }}>
+    <p> {min + ":" + seconds} </p>
     </div>
   )
 }
 
-<<<<<<< HEAD
-export {useMobileDetect, Counter, handleClick};
-=======
 async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {  
   let apiUrl = import.meta.env.VITE_API_URL || `http://localhost:3000/api`;
 
@@ -130,4 +131,3 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
   
 
   export {useMobileDetect, Counter, handleClick, fetching};
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236

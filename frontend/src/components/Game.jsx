@@ -1,55 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import CPUPlay from './CPU';
+import Player from "./Player.jsx";
 import { Counter, useMobileDetect } from "./utilities.jsx";
 import "../styles/Game.css";
-<<<<<<< HEAD
-
-function setMaxHeight(leftBalls, rightBalls) {
-  return '325';
-=======
 import "../styles/page.css";
-
-function GameSettings({changeSettings}) {
-  const [nBalls, setNBalls] = useState(20);
-  function handleGame() {
-    const minutes = document.querySelector('.minutes');
-    const seconds = document.querySelector('.seconds');
-    if (!minutes || !seconds) return;
-    const totalSeconds = parseInt(minutes.value) * 60 + parseInt(seconds.value);
-    changeSettings(totalSeconds, nBalls);
-  }
-
-  useEffect(() => {
-    const slider = document.querySelector('.slider');
-    if (!slider) return;
-    slider.addEventListener('click', function() {
-      setNBalls(slider.value);
-    });
-    slider.addEventListener('touchend', function() {
-      setNBalls(slider.value);
-    })
-  }, [nBalls])
-
-  return (
-    <div className="box">
-      <p className="settings-text">Max Number of Balls in Game</p>
-      <div className="slider-container" style={{ display: "flex" }}>
-        <input type="range" min="10" max="20" className="slider" step="2" defaultValue="20" />
-        <h3 className="settings-text" style={{margin: '0 auto'}}>{nBalls}</h3>
-      </div>
-      <br/>
-      <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
-        <input type="number" className="minutes" min="1" max="60" defaultValue="10" />
-        <h3 className="settings-text">:</h3>
-        <input type="number" className="seconds" min="0" max="60" defaultValue="0" />
-      </div>
-      <br />
-      <button className="button" onClick={handleGame}>Restart Game</button>
-    </div>
-  )
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
-}
 
 const generateInitialState = (numberOfBalls) => {
   const half = numberOfBalls / 2;
@@ -93,27 +48,20 @@ function calculateWinner(leftBalls, rightBalls, isUser, isCPUPlaying) {
 }
 
 
-<<<<<<< HEAD
-function Game({ numberOfballs, maxSeconds, isCPUPlaying }) {
-  const isMobile = useMobileDetect();
-  const gameInfo = useRef();
-=======
 function Game({ isCPUPlaying }) {
   const isMobile = useMobileDetect();
   const gameInfo = useRef();
   const [numberOfballs, setNumberOfballs] = useState(20);
-  const [maxSeconds, setMaxSeconds] = useState(60);
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
+  const [minutes, setMinutes] = useState(1);
+  const [seconds, setSeconds] = useState(0);
+  const [maxSeconds, setMaxSeconds] = useState(minutes * 60 + seconds);
   const [history, setHistory] = useState(generateInitialState(numberOfballs));
   const [savedBalls, setSavedBalls] = useState([]);
   const [currentMove, setCurrentMove] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [gameStart, setGameStart] = useState(false);
   const [ruleViolation, setRuleViolation] = useState(false);
-<<<<<<< HEAD
-=======
   const [gameSettings, setGameSettings] = useState(false);
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   const userIsNext = currentMove % 2 === 0;
 
   // If available, fix this so that the user turn is random. It means
@@ -124,20 +72,11 @@ function Game({ isCPUPlaying }) {
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
 
-<<<<<<< HEAD
-  const maxHeight = `${setMaxHeight(history[0].left.length, history[0].right.length)}px`;
-
-=======
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   function handleBallClick(ball) {
     if (!gameStart) {
       setGameStart(true);
     }
-<<<<<<< HEAD
-    if (gameOver || history.length != currentMove + 1) return;
-=======
     if (gameOver || history.length != currentMove + 1 || gameSettings) return;
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
     setSavedBalls(prev =>
       prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
     );
@@ -145,11 +84,7 @@ function Game({ isCPUPlaying }) {
 
 
   function handleConfirm() {
-<<<<<<< HEAD
-    if (savedBalls.length === 0) return;
-=======
     if (savedBalls.length === 0 || gameSettings) return;
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
 
 
     const lastState = history[currentMove];
@@ -181,10 +116,6 @@ function Game({ isCPUPlaying }) {
     }
   }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   function jumpTo(nextMove) {
     setCurrentMove(nextMove);
   }
@@ -203,7 +134,19 @@ function Game({ isCPUPlaying }) {
     if (savedBalls && savedBalls.length > 0) {
       handleConfirm();
     }
-  }, [savedBalls])
+  }, [savedBalls]);
+
+  useEffect(() => {
+    if (numberOfballs != null) {
+      handleRestart();
+    }
+  }, [numberOfballs]);
+
+  useEffect(() => {
+    if (maxSeconds != null) {
+      handleRestart();
+    }
+  }, [maxSeconds]);
 
   let status;
   let opponent = isCPUPlaying ? "computer" : "opponent";
@@ -215,11 +158,7 @@ function Game({ isCPUPlaying }) {
     status = "Next player: " + (userIsNext ? "you" : opponent);
   }
   else {
-<<<<<<< HEAD
-    status = "Out of time";
-=======
     status = "Game Over";
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   }
 
   const moves = history.map((step, move) => {
@@ -241,123 +180,182 @@ function Game({ isCPUPlaying }) {
     handleRestart();
   }, [isCPUPlaying]);
 
-<<<<<<< HEAD
-=======
-  function changeSettings(totalSeconds, nBalls) {
-    setNumberOfballs(nBalls);
+  const handleGame = () => {
+    const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+    setNumberOfballs(numberOfballs);
     setMaxSeconds(totalSeconds);
     handleRestart();
-  }
+  };
 
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   function handleRestart() {
+    console.log("total seconds: ", maxSeconds);
     setHistory(generateInitialState(numberOfballs));
     setSavedBalls([]);
     setCurrentMove(0);
     setGameOver(false);
     setGameStart(false);
-<<<<<<< HEAD
-=======
-    setMaxSeconds(maxSeconds);
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
   }
 
 
   return (
     <>
       {isMobile ? (
-<<<<<<< HEAD
-        <div className="box">
-=======
         <>
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
           <div className="game">
-            <div className="status" style={{ display: 'flex', backgroundColor: 'transparent' }}>
-              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
-            </div >
-<<<<<<< HEAD
-            {ruleViolation && <WarningToggle />
-            }
-            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} maxHeight={maxHeight} />
-            <br />
-            {!gameOver && (<button className="button" onClick={handleConfirm}>Confirm Move</button>)}
-            {
-              gameOver && (
-                <button className="button" onClick={handleRestart}>Restart Game</button>
-              )
-            }
-            <div className="status" ref={gameInfo}>
-=======
             {ruleViolation && <WarningToggle />}
-            {gameSettings && <GameSettings />}
+            {gameSettings &&
+              <div className="center" style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%'
+              }}
+                onClick={() => setGameSettings(false)}>
+                <div className="box" onClick={(e) => e.stopPropagation()}>
+                  <p className="settings-text">Max Number of Balls in Game</p>
+                  <div className="slider-container" style={{ display: "flex" }}>
+                    <input
+                      type="range"
+                      min="10"
+                      max="20"
+                      className="slider"
+                      step="2"
+                      value={numberOfballs}
+                      onChange={(e) => setNumberOfballs(e.target.value)}
+                    />
+                    <h3 className="settings-text" style={{ margin: "0 auto" }}>
+                      {numberOfballs}
+                    </h3>
+                  </div>
+                  <br />
+                  <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
+                    <input 
+                      type="number" 
+                      className="minutes" 
+                      min="1" 
+                      max="60" 
+                      defaultValue={minutes}
+                      onChange={(e) => setMinutes(Number(e.target.value))}
+                    />
+                    <h3 className="settings-text">:</h3>
+                    <input 
+                      type="number" 
+                      className="seconds" 
+                      min="0" 
+                      max="59" 
+                      defaultValue={seconds}
+                      onChange={(e) => setSeconds(Number(e.target.value))}
+                    />
+                  </div>
+                  <br />
+                  <button className="button" onClick={handleGame}>Restart Game</button>
+                </div>
+              </div>
+            }
+            <br />
             <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
             <br />
-            {!gameOver && (<button className="button main" onClick={handleConfirm}>Confirm Move</button>)}
-            {
-              gameOver && (
-                <button className="button main" onClick={handleRestart}>Restart Game</button>
-              )
-            }
             <div className="status" ref={gameInfo}>
-              <button className="button" onClick={() => setGameSettings(!gameSettings)}>Game Settings</button>
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
-              <p style={{ fontWeight: 'bold' }}>{status}</p>
-              <ol>{moves}</ol>
+              <div style={{ display: 'flex' }}>
+                <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
+                <p style={{ fontWeight: 'bold' }}>{status}</p>
+              </div>
+              <div style={{ display: 'flex' }}>
+                {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
+                {
+                  gameOver && (
+                    <button className="button main" onClick={handleRestart} style={{ minHeight: '50px' }}>Restart Game</button>
+                  )
+                }
+                <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ minWidth: '100px' }}>Game Settings</button>
+              </div>
+              <div style={{ width: '200px', height: '100px', overflowY: 'auto' }}>
+                <ol>{moves}</ol>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
+                <Player name={"You"} />
+                <Player name={opponent} />
+              </div >
             </div>
           </div>
-<<<<<<< HEAD
-        </div>
-      ) : (
-        <div className="box">
-=======
         </>
       ) : (
         <div style={{ display: 'flex' }}>
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
           <div className="game">
-            <div className="status" style={{ display: 'flex', gap: '168px', padding: '10px', width: '640px', height: '100px', backgroundColor: 'transparent' }}>
-              <p style={{ fontWeight: 'bold' }}>Player</p>
-              <p style={{ fontWeight: 'bold' }}>{opponent}</p>
-              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
-            </div >
             {ruleViolation && <WarningToggle />
             }
-<<<<<<< HEAD
-            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} maxHeight={maxHeight} />
-            <br />
-            {!gameOver && (<button className="button" onClick={handleConfirm}>Confirm Move</button>)}
-            {
-              gameOver && (
-                <button className="button" onClick={handleRestart}>Restart Game</button>
-=======
-            {gameSettings && <GameSettings changeSettings={changeSettings}/>}
-            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
-            <br />
-            {!gameOver && (<button className="button main" onClick={handleConfirm}>Confirm Move</button>)}
-            {
-              gameOver && (
-                <button className="button main" onClick={handleRestart}>Restart Game</button>
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
-              )
+            {gameSettings &&
+              <div className="center" style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%'
+              }}
+                onClick={() => setGameSettings(false)}>
+                <div className="box" onClick={(e) => e.stopPropagation()}>
+                  <p className="settings-text">Max Number of Balls in Game</p>
+                  <div className="slider-container" style={{ display: "flex" }}>
+                    <input
+                      type="range"
+                      min="10"
+                      max="20"
+                      className="slider"
+                      step="2"
+                      value={numberOfballs}
+                      onChange={(e) => setNumberOfballs(e.target.value)}
+                    />
+                    <h3 className="settings-text" style={{ margin: "0 auto" }}>
+                      {numberOfballs}
+                    </h3>
+                  </div>
+                  <br />
+                  <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
+                    <input 
+                      type="number" 
+                      className="minutes" 
+                      min="1" 
+                      max="60" 
+                      defaultValue={minutes}
+                      onChange={(e) => setMinutes(Number(e.target.value))}
+                    />
+                    <h3 className="settings-text">:</h3>
+                    <input 
+                      type="number" 
+                      className="seconds" 
+                      min="0" 
+                      max="59" 
+                      defaultValue={seconds}
+                      onChange={(e) => setSeconds(Number(e.target.value))}
+                    />
+                  </div>
+                  <br />
+                  <button className="button" onClick={handleGame}>Restart Game</button>
+                </div>
+              </div>
             }
+            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
+            <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
+              <Player name={"You"} />
+              <Player name={opponent} />
+            </div >
           </div >
           <div className="status" ref={gameInfo}>
-<<<<<<< HEAD
-            <p style={{ fontWeight: 'bold' }}>{status}</p>
-            <ol>{moves}</ol>
-          </div>
-        </div >
-=======
-            <div style={{ justifyItems: 'center' }}>
+            <div style={{ display: 'flex' }}>
+              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
               <p style={{ fontWeight: 'bold' }}>{status}</p>
+            </div>
+            <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>
               <ol>{moves}</ol>
             </div>
-            <div style={{ position: 'absolute', bottom: '0', margin: '5px', justifyContent: 'center' }}>
-              <button className="button" onClick={() => setGameSettings(!gameSettings)}>Game Settings</button>
+            <div style={{ bottom: '0', margin: '5px', justifyContent: 'center' }}>
+              {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
+              {
+                gameOver && (
+                  <button className="button main" onClick={handleRestart} style={{ minHeight: '50px' }}>Restart Game</button>
+                )
+              }
+              <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ width: '100%', minHeight: '20px' }}>Game Settings</button>
             </div>
           </div>
         </div>
->>>>>>> efa72369a7cb309458e0731b7ff74db918251236
       )}
     </>
   );
