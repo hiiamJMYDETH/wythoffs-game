@@ -48,10 +48,10 @@ function SideBar() {
                     Wythoff's Game Online
                 </button>
                 <button ref={play} className="button menu-btn play" onClick={() => handleClick('play', navigate)}>Play</button>
-                <button className="button menu-btn sign-up">Sign Up</button>
-                <button className="button menu-btn login">Login</button>
-                <button className="button menu-btn settings">Settings</button>
-                <button className="button menu-btn help">Help</button>
+                <button className="button menu-btn sign-up" onClick={() => handleClick('signup', navigate)}>Sign Up</button>
+                <button className="button menu-btn login" onClick={() => handleClick('login', navigate)}>Login</button>
+                <button className="button menu-btn settings" onClick={() => handleClick('settings', navigate)}>Settings</button>
+                <button className="button menu-btn help" onClick={() => handleClick('help', navigate)}>Help</button>
             </div>
 
             {playOpts && (
