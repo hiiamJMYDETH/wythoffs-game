@@ -3,31 +3,43 @@ import { useNavigate } from "react-router-dom";
 import SideBar from "../components/SideBar.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Board from "../components/Board.jsx";
+import Background from "../components/Background.jsx";
+import PlayImage from "../assets/Play.svg";
 import "../styles/page.css";
 
 function HomePage() {
     const navigate = useNavigate();
     const isMobile = useMobileDetect();
-    fetching('users').then((message) => {
+    fetching('hello').then((message) => {
         console.log('Message from API:', message);
     });
     return (
         <div className="page">
+            {/* <Background /> */}
             {isMobile ? (
                 <>
                     <MobileSideBar />
                     <div className="center">
                         <div style={{ padding: '10px' }}>
                             <h2>Welcome to Wythoff's Game Online</h2>
-                                <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-noCPU', navigate)}>
-                                    <h3>Play</h3>
-                                    <p>Play with someone online</p>
-                                </button>
-                                <br />
-                                <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-CPU', navigate)}>
-                                    <h3>Play with Bots</h3>
-                                    <p>Play vs training bots</p>
-                                </button>
+                            <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-noCPU', navigate)}>
+                                <div style={{ display: 'flex' }}>
+                                    <img
+                                        src={PlayImage}
+                                        style={{
+                                            width: '60px',
+                                            height: '60px',
+                                            padding: '2px'
+                                        }} />
+                                    <h3>Play Online</h3>
+                                </div>
+                                <p>Play with someone online</p>
+                            </button>
+                            <br />
+                            <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-CPU', navigate)}>
+                                <h3>Play with Bots</h3>
+                                <p>Play vs training bots</p>
+                            </button>
                         </div>
                         <p style={{ position: 'relative', bottom: '0' }}>@2025 Wythoff's Game Online</p>
                     </div>
@@ -50,7 +62,16 @@ function HomePage() {
                                 <h2>Game Online</h2>
                                 <div style={{ display: 'grid' }}>
                                     <button className="button main" onClick={() => handleClick('play-noCPU', navigate)}>
-                                        <h3>Play</h3>
+                                        <div style={{ display: 'flex', justifySelf: 'center' }}>
+                                            <img
+                                                src={PlayImage}
+                                                style={{
+                                                    width: '60px',
+                                                    height: '60px',
+                                                    padding: '10px'
+                                                }} />
+                                            <h3>Play Online</h3>
+                                        </div>
                                         <p>Play with someone online</p>
                                     </button>
                                     <br />

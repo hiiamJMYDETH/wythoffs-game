@@ -2,6 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/SideBar.css";
 import { handleClick } from "./utilities";
+import PlayImage from "../assets/Play.svg";
+import UserDefault from "../assets/User default.svg";
+import SettingsIcon from "../assets/Settings.svg";
+import HelpIcon from "../assets/Help.svg";
 
 
 function SideBar() {
@@ -44,20 +48,90 @@ function SideBar() {
     return (
         <div className="sidebar">
             <div ref={menu} className="menu-bar">
-                <button className="button menu-btn" onClick={() => handleClick('home', navigate)}>
-                    Wythoff's Game Online
-                </button>
-                <button ref={play} className="button menu-btn play" onClick={() => handleClick('play', navigate)}>Play</button>
-                <button className="button menu-btn sign-up" onClick={() => handleClick('signup', navigate)}>Sign Up</button>
-                <button className="button menu-btn login" onClick={() => handleClick('login', navigate)}>Login</button>
-                <button className="button menu-btn settings" onClick={() => handleClick('settings', navigate)}>Settings</button>
-                <button className="button menu-btn help" onClick={() => handleClick('help', navigate)}>Help</button>
+                <div>
+                    <button
+                        className="button menu-btn"
+                        onClick={() => handleClick('home', navigate)}>
+                        <img
+                            src={UserDefault}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                padding: '2px'
+                            }} />
+                        <h3>Home</h3>
+                    </button>
+                    <button ref={play}
+                        className="button menu-btn play"
+                        onClick={() => handleClick('play', navigate)}>
+                        <img
+                            src={PlayImage}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                padding: '2px'
+                            }} />
+                        <h3>Play</h3>
+                    </button>
+                    <button
+                        className="button menu-btn sign-up"
+                        onClick={() => handleClick('signup', navigate)}>
+                        <h3>Sign Up</h3>
+                    </button>
+                    <button
+                        className="button menu-btn login"
+                        onClick={() => handleClick('login', navigate)}>
+                        <h3>Login</h3>
+                    </button>
+                </div>
+                <div>
+                    <button
+                        className="button menu-btn settings"
+                        onClick={() => handleClick('settings', navigate)}>
+                        <img
+                            src={SettingsIcon}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                padding: '2px'
+                            }} />
+                        <h3>Settings</h3>
+                    </button>
+                    <button
+                        className="button menu-btn help"
+                        onClick={() => handleClick('help', navigate)}>
+                        <img
+                            src={HelpIcon}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                padding: '2px'
+                            }} />
+                        <h3>Help</h3>
+                    </button>
+                </div>
             </div>
 
             {playOpts && (
-                <div className="menu-bar" ref={playMenu} style={{ display: 'flex', flexDirection: 'column' }}>
-                    <button className="button menu-btn" onClick={() => handleClick('play-noCPU', navigate)}>Play</button>
-                    <button className="button menu-btn" onClick={() => handleClick('play-CPU', navigate)}>Play with CPU</button>
+                <div className="menu-bar" ref={playMenu} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'start' }}>
+                    <button
+                        className="button menu-btn"
+                        onClick={() => handleClick('play-noCPU', navigate)}>
+                        <img
+                            src={PlayImage}
+                            style={{
+                                width: '60px',
+                                height: '60px',
+                                padding: '2px'
+                            }} />
+                        <h3>Play Online</h3>
+                    </button>
+                    <button
+                        className="button menu-btn"
+                        onClick={() => handleClick('play-CPU', navigate)}>
+                        <h3>AI</h3>
+                        <h3>Play with CPU</h3>
+                    </button>
                 </div>
             )}
         </div>

@@ -46,6 +46,10 @@ function handleClick(id, navigate) {
       navigate('/signup');
       return;
     }
+    if (id === "help") {
+      navigate('/help');
+      return;
+    }
 }
 
 function Counter({isGameOver, setter, maxSeconds, hasStarted}) {

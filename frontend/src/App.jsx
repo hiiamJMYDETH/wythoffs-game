@@ -7,6 +7,7 @@ import GamePageOnline from "./pages/GamePageOnline.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
+import HelpPage from "./pages/HelpPage.jsx";
 
 const usePageTitle = () => {
   const location = useLocation();
@@ -28,6 +29,9 @@ const usePageTitle = () => {
       case '/settings':
         document.title = "Settings";
         break;
+      case '/help':
+        document.title = "Help";
+        break;
       default:
         document.title = "Wythoff's Game";
     }
@@ -48,6 +52,7 @@ function App() {
         <Route path="/play/computer" element={<GamePageCPU key={location.search} />} />
         <Route path="/play/online" element={<GamePageOnline key={location.search} />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/help" element={<HelpPage />} />
       </Routes>
     </>
   )

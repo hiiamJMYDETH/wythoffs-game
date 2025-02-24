@@ -42,6 +42,7 @@ p {
     filter: brightness(100%);
     width:100%;
     height:100%;
+    border:none;
 }
 
 .game-settings {
@@ -60,7 +61,7 @@ p {
 }
 
 .button.main:hover {
-    box-shadow:0 0 5px 5px white;
+    box-shadow:0 0 5px 5px rgb(255, 255, 255);
     filter:brightness(110%);
 }
 

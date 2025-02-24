@@ -188,7 +188,6 @@ function Game({ isCPUPlaying }) {
   };
 
   function handleRestart() {
-    console.log("total seconds: ", maxSeconds);
     setHistory(generateInitialState(numberOfballs));
     setSavedBalls([]);
     setCurrentMove(0);
