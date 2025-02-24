@@ -4,6 +4,8 @@ import { handleClick, useMobileDetect } from "../components/utilities.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Board from "../components/Board.jsx";
 import SideBar from "../components/SideBar.jsx";
+import Background from "../components/Background.jsx";
+import PlayImage from "../assets/Play.svg";
 
 function PlayPage() {
     const isMobile = useMobileDetect();
@@ -11,14 +13,24 @@ function PlayPage() {
 
     return (
         <div className="page">
+            {/* <Background /> */}
             {isMobile ? (
                 <>
                     <MobileSideBar />
                     <div style={{ padding: '10px' }}>
                         <div style={{ display: 'grid' }}>
-                        <h2>Play Wythoff's Game</h2>
+                            <h2>Play Wythoff's Game</h2>
                             <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-noCPU', navigate)}>
-                                <h3>Play</h3>
+                                <div style={{ display: 'flex', justifySelf:'center' }}>
+                                    <img
+                                        src={PlayImage}
+                                        style={{
+                                            width: '60px',
+                                            height: '60px',
+                                            padding: '5px'
+                                        }} />
+                                    <h3>Play Online</h3>
+                                </div>
                                 <p>Play with someone online</p>
                             </button>
                             <br />
@@ -46,16 +58,25 @@ function PlayPage() {
                             <div style={{ padding: '10px' }}>
                                 <h2>Play Wythoff's Game</h2>
                                 <div style={{ display: 'grid' }}>
-                                        <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-noCPU', navigate)}>
-                                            <h3>Play</h3>
-                                            <p>Play with someone online</p>
-                                        </button>
-                                        <br />
-                                        <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-CPU', navigate)}>
-                                            <h3>Play with Bots</h3>
-                                            <p>Play vs training bots</p>
-                                        </button>
-                                    </div>
+                                    <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-noCPU', navigate)}>
+                                        <div style={{ display: 'flex', justifySelf:'center' }}>
+                                            <img
+                                                src={PlayImage}
+                                                style={{
+                                                    width: '60px',
+                                                    height: '60px',
+                                                    padding: '5px'
+                                                }} />
+                                            <h3>Play Online</h3>
+                                        </div>
+                                        <p>Play with someone online</p>
+                                    </button>
+                                    <br />
+                                    <button className="button main" style={{ width: '100%' }} onClick={() => handleClick('play-CPU', navigate)}>
+                                        <h3>Play with Bots</h3>
+                                        <p>Play vs training bots</p>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <p style={{ position: 'absolute', bottom: '0', justifyContent: 'center' }}>@2025 Wythoff's Game Online</p>

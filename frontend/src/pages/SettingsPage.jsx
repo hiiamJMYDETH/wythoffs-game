@@ -1,3 +1,4 @@
+import Background from "../components/Background";
 import MobileSideBar from "../components/MobileSideBar";
 import SideBar from "../components/SideBar";
 import { useMobileDetect } from "../components/utilities";
@@ -8,18 +9,20 @@ function SettingsPage() {
     let language = "English"
     return (
         <div className="page">
+            {/* <Background /> */}
             {isMobile ? (
                 <MobileSideBar />
             ) : (
                 <SideBar />
             )}
             <div className="center">
-                <div className="box" style={{ 
-                    justifyItems: 'center', 
-                    display: 'grid', 
-                    position: 'relative', 
+                <div className="box" style={{
+                    justifyItems: 'center',
+                    display: 'grid',
+                    position: 'relative',
                     zIndex: '0',
-                    }}>
+                    border: 'none'
+                }}>
                     <h3>Settings</h3>
                     <h3>Guest</h3>
                     <p>You must login to access more features.
@@ -33,14 +36,55 @@ function SettingsPage() {
                         <p>Background</p>
                         <button className="button">White</button>
                     </div>
-                    <br />
-                    <input type="text" style={{ width: '100%'}} placeholder="Old username" />
-                    <input type="text" style={{ width: '100%'}} placeholder="New username" />
-                    <button className="button" style={{ width: '100%'}} >Change username</button>
-                    <input type="password" style={{ width: '100%'}} placeholder="Old password" />
-                    <input type="password" style={{ width: '100%'}} placeholder="New password" />
-                    <button className="button" style={{ width: '100%'}} >Change password</button>
-                    <br />
+                    <input
+                        type="text"
+                        style={{
+                            borderBottom: '1px solid black',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            width: '100%',
+                            fontSize: 'large',
+                            margin: '5px'
+                        }}
+                        placeholder="Old username" />
+                    <input
+                        type="text"
+                        style={{
+                            borderBottom: '1px solid black',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            width: '100%',
+                            fontSize: 'large',
+                            margin: '5px'
+                        }}
+                        placeholder="New username" />
+                    <button className="button" style={{ width: '100%' }} > Change username</button>
+                    <input
+                        type="password"
+                        style={{
+                            borderBottom: '1px solid black',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            width: '100%',
+                            fontSize: 'large',
+                            margin: '5px'
+                        }}
+                        placeholder="Old password" />
+                    <input type="password"
+                        style={{
+                            borderBottom: '1px solid black',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            width: '100%',
+                            fontSize: 'large',
+                            margin: '5px'
+                        }}
+                        placeholder="New password" />
+                    <button className="button" style={{ width: '100%', margin:'auto' }} >Change password</button>
                     <button className="button main">Delete account</button>
                 </div>
                 {isMobile ? (

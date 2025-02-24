@@ -2,7 +2,7 @@
     display:flex;
     flex-wrap: wrap;
     background-color:white;
-    filter: brightness(70%);
+    filter: brightness(90%);
     justify-content: center;
     border-radius:10px;
 }
@@ -38,6 +38,7 @@ input[type="number"] {
     width: clamp(40px, 10vw, 70px);
     height: clamp(40px, 10vw, 70px);
     box-shadow: 2px 2px black;
+    background-color:#b5b5b5;
 }
 
 .timer-status {
@@ -63,7 +64,7 @@ input[type="number"] {
 }
 
 .status {
-    background-color:rgb(175, 175, 175);
+    background-color:rgb(228, 228, 228);
     color:black;
     font-size:large;
     justify-items:center;
