@@ -1,7 +1,16 @@
 1. Make a postgreSQL database containing the username, email, password, win-loss ratio, number of games played, number of wins, and number of losses. (kinda done, but got the api to connect with the frontend)
 2. Test multiplayer modes
-3. Make Login and Signup Pages
+
+Unfortunately, the main problem with it is what to do with the mode in general. 
+For one, there should be a difference between playing online and playing against a computer.
+But the main issue is that the online mode must have options to separate the player based
+on default modes. 
+
+
+3. Update the settings page to include deletion of the user and changing the password.
 4. set a separate class that determines the background of stuff, with the exception of the marbles
 5. modify the CPU algorithm to have several modes. One is the 
 (I've just known the rules and take the most) and the optimal winning strat
-6. Have the game reflect on the set settings because they remained the same for some reason.
+6. Make a lobby and also flip the counts so that not everyone gets the premier position. 
+7. Make a local storage that contains the user object so that it can be used for live checking. After an hour, it's deleted.
+8. Draw the storage system and how the data is handled, to ensure smooth and orderly game running. The goal is an easier way for the user to get access to th esame game. 

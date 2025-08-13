@@ -1,5 +1,3 @@
-import { connectToDatabase } from "./config/db.js";
-import authenticateToken from "./config/auth.js";
 import redisClient from "./config/redis.js";
 
 export default async function handler(req, res) {
@@ -15,11 +13,16 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            const client = await connectToDatabase();
-            const temp_user = await redisClient.hGetAll("user:1001");
-            console.log("temp user from redis: ", temp_user);
-            const results = await client.query("SELECT * FROM users");
-            res.status(200).json(results);
+            const sessionId = req.headers['authorization']?.replace('Session ', '');
+            console.log("Session ID:", sessionId);
+            const sessionData = await redisClient.hGetAll(`session:${sessionId}`);
+            console.log("Session Data:", sessionData);
+            if (!sessionData || !sessionData.user_id) {
+                return res.status(401).json({ message: "Unauthorized" });
+            }
+            const userId = sessionData.user_id;
+            const temp_user = await redisClient.hGetAll(`user:${userId}`);
+            res.status(200).json(temp_user);
         }
         catch (error) {
             console.log("Error message: ", error);
