@@ -1,21 +1,17 @@
-import { fetching, useMobileDetect, handleClick } from "../components/utilities.jsx";
+import { useMobileDetect, handleClick } from "../components/utilities.jsx";
 import { useNavigate } from "react-router-dom";
 import SideBar from "../components/SideBar.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Board from "../components/Board.jsx";
-import Background from "../components/Background.jsx";
 import PlayImage from "../assets/Play.svg";
 import "../styles/page.css";
 
 function HomePage() {
     const navigate = useNavigate();
     const isMobile = useMobileDetect();
-    fetching('hello').then((message) => {
-        console.log('Message from API:', message);
-    });
+      
     return (
         <div className="page">
-            {/* <Background /> */}
             {isMobile ? (
                 <>
                     <MobileSideBar />

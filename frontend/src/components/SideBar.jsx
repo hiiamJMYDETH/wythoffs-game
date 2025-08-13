@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/SideBar.css";
-import { handleClick } from "./utilities";
+import { handleClick, fetching } from "./utilities";
 import PlayImage from "../assets/Play.svg";
 import UserDefault from "../assets/User default.svg";
 import SettingsIcon from "../assets/Settings.svg";
@@ -14,6 +14,25 @@ function SideBar() {
     const play = useRef(null);
     const playMenu = useRef(null);
     const menu = useRef(null);
+    const token = localStorage.getItem('sessionId') || null;
+    var user = localStorage.getItem('user') || null;
+
+    useEffect(() => {
+        async function loadUsers() {
+            try {
+              const users = await fetching('loaduser');
+              console.log('Users:', users);
+              localStorage.setItem('user', JSON.stringify(users));
+
+            } catch (error) {
+              console.error('Error loading users:', error.message);
+                localStorage.removeItem('sessionId');
+                localStorage.removeItem('user');
+                user = null;
+            }
+          }
+          loadUsers();
+    }, [token]);
 
     useEffect(() => {
         if (!play.current) return;
@@ -73,16 +92,20 @@ function SideBar() {
                             }} />
                         <h3>Play</h3>
                     </button>
-                    <button
-                        className="button menu-btn sign-up"
-                        onClick={() => handleClick('signup', navigate)}>
-                        <h3>Sign Up</h3>
-                    </button>
-                    <button
-                        className="button menu-btn login"
-                        onClick={() => handleClick('login', navigate)}>
-                        <h3>Login</h3>
-                    </button>
+                    {!user && (
+                        <>
+                            <button
+                                className="button menu-btn sign-up"
+                                onClick={() => handleClick('signup', navigate)}>
+                                <h3>Sign Up</h3>
+                            </button>
+                            <button
+                                className="button menu-btn login"
+                                onClick={() => handleClick('login', navigate)}>
+                                <h3>Login</h3>
+                            </button>
+                        </>
+                    )}
                 </div>
                 <div>
                     <button

@@ -1,14 +1,51 @@
-import Background from "../components/Background";
+import { useState } from "react";
+import { fetching } from "../components/utilities";
+import { useNavigate } from "react-router-dom";
 import "../styles/page.css";
 
 function SignUpPage() {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [wrongInfo, setWrongInfo] = useState(false);
+    const [missingInfo, setMissingInfo] = useState(false);
+
+    async function handleSignUp() {
+        if (confirmPass != password) {
+            console.log("password doesn't match");
+            setWrongInfo(true);
+            return;
+        }
+        if (email === '' || username === '' || password === '' || confirmPass === '') {
+            console.log("Missing information");
+            setMissingInfo(true);
+            return;
+        }
+        setWrongInfo(false);
+        setMissingInfo(false);
+        const response = await fetching('signup', 'POST', {name: username, email: email, password: password});
+        if (response.message && response.message === 'Successfully created an account') {
+            localStorage.setItem("token", response.token);
+            navigate('/');
+        }
+        else {
+            setWrongInfo(true);
+        }
+    }
     return (
         <div className="page">
-            {/* <Background /> */}
             <div className="center">
                 <h1>Wythoff's Game</h1>
                 <div className="box" style={{ justifyItems: 'center', display: 'grid', position: 'relative', zIndex: '0' }}>
                     <h1>Sign Up</h1>
+                    {wrongInfo && <>
+                        <p style={{ color: 'red' }}>*Incorrect user information</p>
+                    </>}
+                    {missingInfo && <>
+                        <p style={{ color: 'red' }}>*Missing user information</p>
+                    </>}
                     <input
                         style={{
                             borderBottom: '1px solid black',
@@ -19,7 +56,12 @@ function SignUpPage() {
                             fontSize: 'large',
                             margin: '5px'
                         }}
-                        type="text" placeholder="Username" />
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => {
+                            setUsername(e.target.value);
+                        }} />
                     <br />
                     <input
                         style={{
@@ -31,7 +73,12 @@ function SignUpPage() {
                             fontSize: 'large',
                             margin: '5px'
                         }}
-                        type="text" placeholder="Email" />
+                        type="text"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                        }} />
                     <br />
                     <input
                         style={{
@@ -43,9 +90,35 @@ function SignUpPage() {
                             fontSize: 'large',
                             margin: '5px'
                         }}
-                        type="text" placeholder="Password" />
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => {
+                            setPassword(e.target.value);
+                        }} />
+                    <input
+                        style={{
+                            borderBottom: '1px solid black',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            width: '100%',
+                            fontSize: 'large',
+                            margin: '5px'
+                        }}
+                        type="password"
+                        placeholder="Confirm password"
+                        value={confirmPass}
+                        onChange={(e) => {
+                            setConfirmPass(e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                handleSignUp();
+                            }
+                        }} />
                     <br />
-                    <button className="button">Sign Up</button>
+                    <button className="button" onClick={handleSignUp}>Sign Up</button>
                 </div>
                 <p style={{ position: 'relative', bottom: '0' }}>@2025 Wythoff's Game Online</p>
             </div>

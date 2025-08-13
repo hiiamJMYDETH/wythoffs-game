@@ -1,62 +1,62 @@
 import { useEffect, useState } from "react";
 
 function useMobileDetect() {
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
-    useEffect(() => {
-      const handleResize = () => {
-        setIsMobile(window.innerWidth <= 768);
-      };
-  
-      window.addEventListener("resize", handleResize);
-      return () => {
-        window.removeEventListener("resize", handleResize);
-      };
-    }, []);
-  
-    return isMobile;
-  }
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-function handleClick(id, navigate) {
-    if (id === "home") {
-        navigate('/');
-        return;
-    }
-    if (id === "play") {
-        navigate('/play');
-        return;
-    }
-    if (id === "play-CPU") {
-        navigate('/play/computer');
-        return;
-    }
-    if (id === "play-noCPU") {
-        navigate('/play/online');
-        return;
-    }
-    if (id === "settings") {
-      navigate('/settings');
-      return;
-    }
-    if (id === "login") {
-      navigate('/login');
-      return;
-    }
-    if (id === "signup") {
-      navigate('/signup');
-      return;
-    }
-    if (id === "help") {
-      navigate('/help');
-      return;
-    }
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  return isMobile;
 }
 
-function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
+function handleClick(id, navigate) {
+  if (id === "home") {
+    navigate('/');
+    return;
+  }
+  if (id === "play") {
+    navigate('/play');
+    return;
+  }
+  if (id === "play-CPU") {
+    navigate('/play/computer');
+    return;
+  }
+  if (id === "play-noCPU") {
+    navigate('/play/online');
+    return;
+  }
+  if (id === "settings") {
+    navigate('/settings');
+    return;
+  }
+  if (id === "login") {
+    navigate('/login');
+    return;
+  }
+  if (id === "signup") {
+    navigate('/signup');
+    return;
+  }
+  if (id === "help") {
+    navigate('/help');
+    return;
+  }
+}
+
+function Counter({ isGameOver, setter, maxSeconds, hasStarted }) {
   if (isGameOver) {
     return (
-      <div className="status timer" style={{display:'none'}}>
-      <p style={{margin:'0px'}}> Results: </p>
+      <div className="status timer" style={{ display: 'none' }}>
+        <p style={{ margin: '0px' }}> Results: </p>
       </div>
     )
   }
@@ -64,8 +64,8 @@ function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
 
   useEffect(() => {
     if (isGameOver || !hasStarted) {
-        setCount(0);
-        return;
+      setCount(0);
+      return;
     }
     const intervalId = setInterval(() => {
       setCount(prev => prev + 1);
@@ -86,52 +86,73 @@ function Counter({isGameOver, setter, maxSeconds, hasStarted}) {
 
   if (isGameOver) {
     return (
-      <div className="timer" style={{fontSize: '35px', justifySelf:'center'}}>
-      <p> Out of time </p>
+      <div className="timer" style={{ fontSize: '35px', justifySelf: 'center' }}>
+        <p> Out of time </p>
       </div>
     )
   }
 
   return (
     <div className="timer" style={{
-      justifySelf:'center',
+      justifySelf: 'center',
       fontWeight: 'bold',
-      marginRight:'10px'
+      marginRight: '10px'
     }}>
-    <p> {min + ":" + seconds} </p>
+      <p> {min + ":" + seconds} </p>
     </div>
   )
 }
 
-async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {  
-  let apiUrl = import.meta.env.VITE_API_URL || `http://localhost:3000/api`;
-
+async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
+  const apiUrl = import.meta.env.VITE_API_URL || `http://localhost:3000/api`;
 
   const options = {
-    method: reqMethod,  
+    method: reqMethod,
     headers: {
-      'Content-Type': 'application/json',  
-    },
+      'Content-Type': 'application/json',
+      'Authorization': `Session ${localStorage.getItem('sessionId') || ''}`
+    }
   };
 
-  if (reqMethod === 'POST' || reqMethod === 'PUT') {
-    options.body = JSON.stringify({ data: `${reqData}` });  
+  if ((reqMethod === 'POST' || reqMethod === 'PUT') && reqData !== "Your data here") {
+    options.body = JSON.stringify(reqData);
   }
 
   try {
-    const response = await fetch(`${apiUrl}/${req}`, options);  
+    const response = await fetch(`${apiUrl}/${req}`, options);
 
-    if (response.ok) {
-      const data = await response.json();
-      return data.message || 'No message received'; 
-    } else {
-      return `API request failed: ${response.status} ${response.statusText}`;
+    // Read the body as text once
+    const text = await response.text();
+    console.log("Raw response:", text);
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${text}`);
+    }
+
+    // Try to parse JSON
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text || 'No message received';
     }
   } catch (error) {
-    return `Fetch error: ${error.message}`;
+    throw new Error(`Fetch error: ${error.message}`);
   }
 }
 
-  
 
-  export {useMobileDetect, Counter, handleClick, fetching};
+function LoadingDiv() {
+  return (
+    <div style={{
+      textAlign: 'center',
+      padding: '20px',
+      color: '#666'
+    }}>
+      Loading your settings...
+    </div>
+  );
+}
+
+
+
+export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv };
