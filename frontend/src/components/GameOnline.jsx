@@ -53,7 +53,7 @@ export default function GameOnline({ id, player, opponent }) {
     const [gameOver, setGameOver] = useState(false);
     const [gameStart, setGameStart] = useState(false);
     const [ruleViolation, setRuleViolation] = useState(false);
-    const [gameSettings, setGameSettings] = useState(true);
+    const [gameSettings, setGameSettings] = useState(false);
     const [playerIsNext, setPlayerIsNext] = useState(determineTurn);
 
 
@@ -64,35 +64,33 @@ export default function GameOnline({ id, player, opponent }) {
         const interval = setInterval(async () => {
             try {
                 const data = await fetching(`getgame?id=${id}`, 'GET');
-                if (!data?.gameData) {
-                    console.error("No game data found for ID:", id);
-                    return;
-                }
+                const gameData = data?.GameData;
+                if (!gameData) return;
 
-                const { left, right } = data.gameData;
-                const newState = { left: JSON.parse(left), right: JSON.parse(right) };
+                const { left, right } = gameData;
+                if (!Array.isArray(left) || !Array.isArray(right)) return;
 
                 setGameState(prevState => {
                     const lastState = prevState[prevState.length - 1];
-                    return lastState && JSON.stringify(lastState) === JSON.stringify(newState)
-                        ? prevState
-                        : [...prevState, newState];
+                    if (!lastState || JSON.stringify(lastState) !== JSON.stringify(gameData)) {
+                        return [...prevState, gameData];
+                    }
+                    return prevState;
                 });
+
             } catch (err) {
-                console.error("Failed to fetch game:", err);
+                console.error(err);
             }
         }, 2000);
 
         return () => clearInterval(interval);
     }, [id]);
 
-
     function handleBallClick(ball) {
         if (!gameStart) {
             setGameStart(true);
         }
-        if (gameOver || history.length != currentMove + 1 || gameSettings) return;
-        console.log("History:", history);
+        if (gameOver || gameSettings) return;
         setSavedBalls(prev =>
             prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
         );
@@ -132,12 +130,6 @@ export default function GameOnline({ id, player, opponent }) {
         }
     }
 
-    const handleGame = () => {
-        const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
-        setMaxSeconds(totalSeconds);
-        handleRestart();
-    };
-
     function handleRestart() {
         const init = generateInitialState(numberOfballs, maxSeconds, id, player);
         // setHistory([init]);
@@ -149,68 +141,63 @@ export default function GameOnline({ id, player, opponent }) {
     }
 
     return (
-        <div>
-            <p>The game is not working at the moment.</p>
+        <div
+            style={{ display: 'flex' }}
+            onClick={() => setGameSettings(false)}
+        >
             {ruleViolation && <WarningToggle />
             }
-            {!gameState &&
-                <div className="center" style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%'
-                }}
-                    onClick={() => setGameSettings(false)}>
-                    <div className="box" onClick={(e) => e.stopPropagation()}>
-                        <p className="settings-text">Max Number of Balls in Game</p>
-                        <div className="slider-container" style={{ display: "flex" }}>
-                            <input
-                                type="range"
-                                min="10"
-                                max="20"
-                                className="slider"
-                                step="2"
-                                value={numberOfballs}
-                                onChange={(e) => setNumberOfballs(Number(e.target.value))}
-                            />
-                            <h3 className="settings-text" style={{ margin: "0 auto" }}>
-                                {numberOfballs}
-                            </h3>
-                        </div>
-                        <br />
-                        <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
-                            <input
-                                type="number"
-                                className="minutes"
-                                min="1"
-                                max="60"
-                                value={minutes}
-                                onChange={(e) => setMinutes(Number(e.target.value))}
-                            />
-                            <h3 className="settings-text">:</h3>
-                            <input
-                                type="number"
-                                className="seconds"
-                                min="0"
-                                max="59"
-                                value={seconds}
-                                onChange={(e) => setSeconds(Number(e.target.value))}
-                            />
-                        </div>
-                        <br />
-                        <button className="button" onClick={() => {
-                            const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
-                            const init = generateInitialState(numberOfballs, totalSeconds, id, player);
-                            setHistory([init]);
-                            setCurrentMove(0);
-                            setGameSettings(false);
-                        }}>
-                            Start Game
-                        </button>
+            {(gameState.length === 0 || gameSettings) &&
+                <div className="box" onClick={(e) => e.stopPropagation()}>
+                    <p className="settings-text">Max Number of Balls in Game</p>
+                    <div className="slider-container" style={{ display: "flex" }}>
+                        <input
+                            type="range"
+                            min="10"
+                            max="20"
+                            className="slider"
+                            step="2"
+                            value={numberOfballs}
+                            onChange={(e) => setNumberOfballs(Number(e.target.value))}
+                        />
+                        <h3 className="settings-text" style={{ margin: "0 auto" }}>
+                            {numberOfballs}
+                        </h3>
                     </div>
+                    <br />
+                    <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
+                        <input
+                            type="number"
+                            className="minutes"
+                            min="1"
+                            max="60"
+                            value={minutes}
+                            onChange={(e) => setMinutes(Number(e.target.value))}
+                        />
+                        <h3 className="settings-text">:</h3>
+                        <input
+                            type="number"
+                            className="seconds"
+                            min="0"
+                            max="59"
+                            value={seconds}
+                            onChange={(e) => setSeconds(Number(e.target.value))}
+                        />
+                    </div>
+                    <br />
+                    <button className="button" onClick={() => {
+                        const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+                        const init = generateInitialState(numberOfballs, totalSeconds, id, player);
+                        setHistory([init]);
+                        setCurrentMove(0);
+                        setGameSettings(false);
+                    }}>
+                        Start Game
+                    </button>
                 </div>
             }
-            {gameState &&
-                <div style={{ display: 'flex' }}>
+            {gameState.length != 0 &&
+                <>
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
                         <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
@@ -236,7 +223,7 @@ export default function GameOnline({ id, player, opponent }) {
                             <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ width: '100%', minHeight: '20px' }}>Game Settings</button>
                         </div>
                     </div>
-                </div>
+                </>
             }
         </div>
     );

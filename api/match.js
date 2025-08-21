@@ -2,18 +2,18 @@ import redisClient from "./config/redis.js";
 import { v4 as uuidv4 } from "uuid";
 
 export default async function handler(req, res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
-    if (req.method === "OPTIONS") return res.status(200).end();
-    if (req.method !== "POST") return res.status(405).json({ error: "Only POST allowed" });
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Only POST allowed" });
 
-    const playerId = String(req.body?.userId);
-    if (!playerId) return res.status(400).json({ error: "Missing userId" });
+  const playerId = String(req.body?.userId);
+  if (!playerId) return res.status(400).json({ error: "Missing userId" });
 
-    const lua = `
+  const lua = `
     local queueKey = KEYS[1]
     local player = ARGV[1]
     local now = ARGV[2]
@@ -56,40 +56,53 @@ export default async function handler(req, res) {
       "expiresAt", expireTime
     )
 
+    -- Initialize empty history list with first state
+    local initialState = cjson.encode({
+      left = {},
+      right = {},
+      move = 0
+    })
+    redis.call("RPUSH", "lobby:"..lobbyId..":history", initialState)
+
     return {lobbyId, p1, p2}
   `;
 
-    const lobbyId = uuidv4();
-    const now = Date.now();
-    const expireTime = now + 3600000;
 
-    try {
-        const result = await redisClient.eval(lua, {
-            keys: ["queue:queue"],
-            arguments: [playerId, now.toString(), expireTime.toString(), lobbyId]
-        });
+  const lobbyId = uuidv4();
+  const now = Date.now();
+  const expireTime = now + 3600000;
 
-        if (!result || result.length === 0) {
-            return res.status(200).json({ message: "Waiting for opponent..." });
-        }
+  try {
+    const result = await redisClient.eval(lua, {
+      keys: ["queue:queue"],
+      arguments: [playerId, now.toString(), expireTime.toString(), lobbyId]
+    });
 
-        if (result[0] === "ALREADY_IN_LOBBY") {
-            const lobbyKey = result[1];
-            const existingLobbyId = lobbyKey.match(/lobby:(.*):users/)[1];
-            const users = await redisClient.sMembers(`lobby:${existingLobbyId}:users`);
-            const opponent = users.find(u => u !== playerId) || null;
-            return res.status(200).json({ message: "Already in a lobby", lobbyId: existingLobbyId, opponent });
-        }
-
-        const [createdLobbyId, player1, player2] = result;
-        return res.status(200).json({
-            lobbyId: createdLobbyId,
-            player: playerId,
-            opponent: playerId === player1 ? player2 : player1
-        });
-
-    } catch (err) {
-        console.error("Lua/Redis error:", err);
-        return res.status(500).json({ error: "Server error" });
+    if (!result || result.length === 0) {
+      return res.status(200).json({ message: "Waiting for opponent..." });
     }
+
+    if (result[0] === "ALREADY_IN_LOBBY") {
+      const lobbyKey = result[1];
+      const existingLobbyId = lobbyKey.match(/lobby:(.*):users/)[1];
+      const users = await redisClient.sMembers(`lobby:${existingLobbyId}:users`);
+      const opponent = users.find(u => u !== playerId) || null;
+      return res.status(200).json({
+        message: "Already in a lobby",
+        lobbyId: existingLobbyId,
+        opponent
+      });
+    }
+
+    const [createdLobbyId, player1, player2] = result;
+    return res.status(200).json({
+      lobbyId: createdLobbyId,
+      player: playerId,
+      opponent: playerId === player1 ? player2 : player1
+    });
+
+  } catch (err) {
+    console.error("Lua/Redis error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
 }

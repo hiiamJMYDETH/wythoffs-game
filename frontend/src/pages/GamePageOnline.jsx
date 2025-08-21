@@ -65,10 +65,8 @@ function GamePageOnline() {
                 const queries = await handleGameState(userId);
 
                 if (queries.lobbyId) {
-                    console.log(queries);
                     setGame(queries.lobbyId);
                     setOpponent(queries.opponent || null);
-                    console.log("Opponent found:", queries.opponent);
 
                     // Stop polling once we found a match
                     clearInterval(intervalId);
