@@ -1,6 +1,4 @@
 import redisClient from "./config/redis.js";
-import dotenv from "dotenv";
-dotenv.config();
 import { v4 as uuidv4 } from "uuid";
 
 export default async function handler(req, res) {
@@ -10,69 +8,88 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
 
     if (req.method === "OPTIONS") return res.status(200).end();
-    if (req.method !== "POST") return res.status(405).json({ error: "Only POST requests allowed" });
+    if (req.method !== "POST") return res.status(405).json({ error: "Only POST allowed" });
 
-    const playerId = req.body?.userId;
-    if (!playerId) return res.status(400).json({ error: "Missing player ID" });
+    const playerId = String(req.body?.userId);
+    if (!playerId) return res.status(400).json({ error: "Missing userId" });
 
-    // Check if user exists
-    const user = await redisClient.hGetAll(`user:${playerId}`);
-    if (!user || Object.keys(user).length === 0) {
-        return res.status(404).json({ error: "User not found" });
-    }
+    const lua = `
+    local queueKey = KEYS[1]
+    local player = ARGV[1]
+    local now = ARGV[2]
+    local expireTime = ARGV[3]
+    local lobbyId = ARGV[4]
 
-    // Check if player already has a lobbyId saved
-    const existingLobbyId = await redisClient.get(`user:${playerId}:lobbyId`);
-    if (existingLobbyId) {
-        // Get other users in the lobby
-        const lobbyUsers = await redisClient.sMembers(`lobby:${existingLobbyId}:users`);
-        const opponent = lobbyUsers.find(u => u !== playerId) || null;
-        const meta = await redisClient.hGetAll(`lobby:${existingLobbyId}:meta`);
+    -- Check if player already in any lobby
+    local lobbyKeys = redis.call("KEYS", "lobby:*:users")
+    for _, key in ipairs(lobbyKeys) do
+      local members = redis.call("SMEMBERS", key)
+      for _, p in ipairs(members) do
+        if p == player then
+          return {"ALREADY_IN_LOBBY", key}
+        end
+      end
+    end
+
+    -- Check if player already in queue
+    local pos = redis.call("LPOS", queueKey, player)
+    if not pos then
+      redis.call("RPUSH", queueKey, player)
+    end
+
+    -- Check if at least 2 players in queue
+    local length = redis.call("LLEN", queueKey)
+    if length < 2 then
+      return {}
+    end
+
+    -- Pop two players atomically
+    local players = redis.call("LPOP", queueKey, 2)
+    local p1, p2 = players[1], players[2]
+
+    -- Create lobby set and metadata
+    redis.call("SADD", "lobby:"..lobbyId..":users", p1, p2)
+    redis.call("HSET", "lobby:"..lobbyId..":meta",
+      "createdAt", now,
+      "status", "active",
+      "playerCount", 2,
+      "expiresAt", expireTime
+    )
+
+    return {lobbyId, p1, p2}
+  `;
+
+    const lobbyId = uuidv4();
+    const now = Date.now();
+    const expireTime = now + 3600000;
+
+    try {
+        const result = await redisClient.eval(lua, {
+            keys: ["queue:queue"],
+            arguments: [playerId, now.toString(), expireTime.toString(), lobbyId]
+        });
+
+        if (!result || result.length === 0) {
+            return res.status(200).json({ message: "Waiting for opponent..." });
+        }
+
+        if (result[0] === "ALREADY_IN_LOBBY") {
+            const lobbyKey = result[1];
+            const existingLobbyId = lobbyKey.match(/lobby:(.*):users/)[1];
+            const users = await redisClient.sMembers(`lobby:${existingLobbyId}:users`);
+            const opponent = users.find(u => u !== playerId) || null;
+            return res.status(200).json({ message: "Already in a lobby", lobbyId: existingLobbyId, opponent });
+        }
+
+        const [createdLobbyId, player1, player2] = result;
         return res.status(200).json({
-            lobbyId: existingLobbyId,
-            opponent,
-            meta
+            lobbyId: createdLobbyId,
+            player: playerId,
+            opponent: playerId === player1 ? player2 : player1
         });
+
+    } catch (err) {
+        console.error("Lua/Redis error:", err);
+        return res.status(500).json({ error: "Server error" });
     }
-
-    // Check queue
-    const queue = await redisClient.lRange("queue:queue", 0, -1);
-
-    if (queue.length >= 1) {
-        // Match found: pop one waiting player
-        const player1 = await redisClient.lPop("queue:queue");
-        const player2 = playerId;
-
-        const lobbyId = uuidv4();
-
-        // Save lobby info
-        await redisClient.sAdd(`lobby:${lobbyId}:users`, player1, player2);
-        await redisClient.hSet(`lobby:${lobbyId}:meta`, {
-            createdAt: Date.now(),
-            status: "active",
-            playerCount: 2,
-            expiresAt: Date.now() + 3600000
-        });
-
-        // Save lobby ID for each player to find easily later
-        await redisClient.set(`user:${player1}:lobbyId`, lobbyId);
-        await redisClient.set(`user:${player2}:lobbyId`, lobbyId);
-
-        console.log(`✅ Lobby ${lobbyId} created with ${player1} and ${player2}`);
-
-        return res.status(200).json({
-            lobbyId,
-            opponent: player1
-        });
-    }
-
-    // No match: add player to queue
-    await redisClient.rPush("queue:queue", playerId);
-    const queueLength = await redisClient.lLen("queue:queue");
-
-    return res.status(200).json({
-        message: "Player added to queue",
-        queueLength,
-        lobbyId: null
-    });
 }

@@ -2,88 +2,28 @@ import { useState, useEffect } from "react";
 import { useMobileDetect, fetching } from "../components/utilities.jsx";
 import { useNavigate } from "react-router-dom";
 import MobileSideBar from "../components/MobileSideBar.jsx";
-import Game from "../components/Game.jsx";
-import MobileGame from "../components/MobileGame.jsx";
+import GameOnline from "../components/GameOnline.jsx";
 import SideBar from "../components/SideBar.jsx";
-import { use } from "react";
 
 async function handleGameState(userId) {
-    console.log("Handling game state for user ID:", userId);
-    console.log("typeof userId:", typeof userId);
     const response = await fetching('match', 'POST', { userId: userId });
     return response;
-}
-
-function GameSettings({ handleGame }) {
-    const [numberOfballs, setNumberOfballs] = useState(20);
-    const [minutes, setMinutes] = useState(1);
-    const [seconds, setSeconds] = useState(0);
-    return (
-        <div className="center" style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%'
-        }}
-        >
-            <div className="box" style={{ placeItems: 'center' }}>
-                <p className="settings-text">Max Number of Balls in Game</p>
-                <div className="slider-container" style={{ display: "flex" }}>
-                    <input
-                        type="range"
-                        min="10"
-                        max="20"
-                        className="slider"
-                        step="2"
-                        value={numberOfballs}
-                        onChange={(e) => setNumberOfballs(e.target.value)}
-                    />
-                    <h3 className="settings-text" style={{ margin: "0 auto" }}>
-                        {numberOfballs}
-                    </h3>
-                </div>
-                <br />
-                <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
-                    <input
-                        type="number"
-                        className="minutes"
-                        min="1"
-                        max="60"
-                        defaultValue={minutes}
-                        onChange={(e) => setMinutes(Number(e.target.value))}
-                    />
-                    <h3 className="settings-text">:</h3>
-                    <input
-                        type="number"
-                        className="seconds"
-                        min="0"
-                        max="59"
-                        defaultValue={seconds}
-                        onChange={(e) => setSeconds(Number(e.target.value))}
-                    />
-                </div>
-                <br />
-                <button className="button" onClick={handleGame}>Start Game</button>
-            </div>
-        </div>
-    );
 }
 
 function GameLobby() {
     const isMobile = useMobileDetect();
 
     return (
-        <div className="box">
-            <div style={{
-                display: "flex",
-                flexDirection: "column", // Stack vertically on mobile
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "20px",
-                borderBottom: "1px solid #ccc",
-                marginBottom: "20px"
-            }}>
-                {isMobile ? <h2>Game Lobby (Mobile)</h2> : <h2>Game Lobby</h2>}
-            </div>
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh",
+            textAlign: "center",
+            padding: "20px",
+            boxSizing: "border-box"
+        }}>
             <div>
                 <p>Loading...</p>
             </div>
@@ -125,9 +65,10 @@ function GamePageOnline() {
                 const queries = await handleGameState(userId);
 
                 if (queries.lobbyId) {
-                    console.log("Match found! Lobby ID:", queries.lobbyId);
+                    console.log(queries);
                     setGame(queries.lobbyId);
                     setOpponent(queries.opponent || null);
+                    console.log("Opponent found:", queries.opponent);
 
                     // Stop polling once we found a match
                     clearInterval(intervalId);
@@ -164,10 +105,11 @@ function GamePageOnline() {
             {isMobile ? <MobileSideBar /> : <SideBar />}
             <div className="center">
                 {game ? (
-                    <Game isCPUPlaying={false} />
+                    <GameOnline id={game} player={userId} opponent={opponent} />
                 )
                     : (
                         < GameLobby />)}
+                {/* <GameOnline /> */}
                 <p style={{ position: "relative", bottom: "0", justifyContent: "center" }}>
                     @2025 Wythoff's Game Online
                 </p>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import CPUPlay from './CPU';
 import Player from "./Player.jsx";
@@ -73,6 +73,7 @@ function Game({ isCPUPlaying }) {
       setGameStart(true);
     }
     if (gameOver || history.length != currentMove + 1 || gameSettings) return;
+    console.log("History:", history);
     setSavedBalls(prev =>
       prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
     );
@@ -194,83 +195,164 @@ function Game({ isCPUPlaying }) {
 
 
   return (
-    <div style={{ display: 'flex' }}>
-      <div className="game">
-        {ruleViolation && <WarningToggle />
-        }
-        {gameSettings &&
-          <div className="center" style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%'
-          }}
-            onClick={() => setGameSettings(false)}>
-            <div className="box" onClick={(e) => e.stopPropagation()}>
-              <p className="settings-text">Max Number of Balls in Game</p>
-              <div className="slider-container" style={{ display: "flex" }}>
-                <input
-                  type="range"
-                  min="10"
-                  max="20"
-                  className="slider"
-                  step="2"
-                  value={numberOfballs}
-                  onChange={(e) => setNumberOfballs(e.target.value)}
-                />
-                <h3 className="settings-text" style={{ margin: "0 auto" }}>
-                  {numberOfballs}
-                </h3>
+    <>
+      {isMobile ? (
+        <div className="game">
+          {ruleViolation && <WarningToggle />}
+          {gameSettings &&
+            <div className="center" style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%'
+            }}
+              onClick={() => setGameSettings(false)}>
+              <div className="box" onClick={(e) => e.stopPropagation()}>
+                <p className="settings-text">Max Number of Balls in Game</p>
+                <div className="slider-container" style={{ display: "flex" }}>
+                  <input
+                    type="range"
+                    min="10"
+                    max="20"
+                    className="slider"
+                    step="2"
+                    value={numberOfballs}
+                    onChange={(e) => setNumberOfballs(e.target.value)}
+                  />
+                  <h3 className="settings-text" style={{ margin: "0 auto" }}>
+                    {numberOfballs}
+                  </h3>
+                </div>
+                <br />
+                <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
+                  <input
+                    type="number"
+                    className="minutes"
+                    min="1"
+                    max="60"
+                    defaultValue={minutes}
+                    onChange={(e) => setMinutes(Number(e.target.value))}
+                  />
+                  <h3 className="settings-text">:</h3>
+                  <input
+                    type="number"
+                    className="seconds"
+                    min="0"
+                    max="59"
+                    defaultValue={seconds}
+                    onChange={(e) => setSeconds(Number(e.target.value))}
+                  />
+                </div>
+                <br />
+                <button className="button" onClick={handleGame}>Restart Game</button>
               </div>
-              <br />
-              <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
-                <input
-                  type="number"
-                  className="minutes"
-                  min="1"
-                  max="60"
-                  defaultValue={minutes}
-                  onChange={(e) => setMinutes(Number(e.target.value))}
-                />
-                <h3 className="settings-text">:</h3>
-                <input
-                  type="number"
-                  className="seconds"
-                  min="0"
-                  max="59"
-                  defaultValue={seconds}
-                  onChange={(e) => setSeconds(Number(e.target.value))}
-                />
+            </div>
+          }
+          <br />
+          <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
+          <br />
+          <div className="status" ref={gameInfo}>
+            <div style={{ display: 'flex' }}>
+              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
+              <p style={{ fontWeight: 'bold' }}>{status}</p>
+            </div>
+            <div style={{ display: 'flex' }}>
+              {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
+              {
+                gameOver && (
+                  <button className="button main" onClick={handleRestart} style={{ minHeight: '50px' }}>Restart Game</button>
+                )
+              }
+              <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ minWidth: '100px' }}>Game Settings</button>
+            </div>
+            <div style={{ width: '200px', height: '100px', overflowY: 'auto' }}>
+              <ol>{moves}</ol>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
+              <Player name={"You"} />
+              <Player name={opponent} />
+            </div >
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex' }}>
+          <div className="game">
+            {ruleViolation && <WarningToggle />
+            }
+            {gameSettings &&
+              <div className="center" style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%'
+              }}
+                onClick={() => setGameSettings(false)}>
+                <div className="box" onClick={(e) => e.stopPropagation()}>
+                  <p className="settings-text">Max Number of Balls in Game</p>
+                  <div className="slider-container" style={{ display: "flex" }}>
+                    <input
+                      type="range"
+                      min="10"
+                      max="20"
+                      className="slider"
+                      step="2"
+                      value={numberOfballs}
+                      onChange={(e) => setNumberOfballs(e.target.value)}
+                    />
+                    <h3 className="settings-text" style={{ margin: "0 auto" }}>
+                      {numberOfballs}
+                    </h3>
+                  </div>
+                  <br />
+                  <div className="time-container" style={{ display: "flex", justifyContent: 'center' }}>
+                    <input
+                      type="number"
+                      className="minutes"
+                      min="1"
+                      max="60"
+                      defaultValue={minutes}
+                      onChange={(e) => setMinutes(Number(e.target.value))}
+                    />
+                    <h3 className="settings-text">:</h3>
+                    <input
+                      type="number"
+                      className="seconds"
+                      min="0"
+                      max="59"
+                      defaultValue={seconds}
+                      onChange={(e) => setSeconds(Number(e.target.value))}
+                    />
+                  </div>
+                  <br />
+                  <button className="button" onClick={handleGame}>Restart Game</button>
+                </div>
               </div>
-              <br />
-              <button className="button" onClick={handleGame}>Restart Game</button>
+            }
+            <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
+            <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
+              <Player name={"You"} />
+              <Player name={opponent} />
+            </div >
+          </div >
+          <div className="status" ref={gameInfo}>
+            <div style={{ display: 'flex' }}>
+              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
+              <p style={{ fontWeight: 'bold' }}>{status}</p>
+            </div>
+            <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>
+              <ol>{moves}</ol>
+            </div>
+            <div style={{ bottom: '0', margin: '5px', justifyContent: 'center' }}>
+              {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
+              {
+                gameOver && (
+                  <button className="button main" onClick={handleRestart} style={{ minHeight: '50px' }}>Restart Game</button>
+                )
+              }
+              <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ width: '100%', minHeight: '20px' }}>Game Settings</button>
             </div>
           </div>
-        }
-        <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
-        <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
-          <Player name={"You"} />
-          <Player name={opponent} />
-        </div >
-      </div >
-      <div className="status" ref={gameInfo}>
-        <div style={{ display: 'flex' }}>
-          <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
-          <p style={{ fontWeight: 'bold' }}>{status}</p>
         </div>
-        <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>
-          <ol>{moves}</ol>
-        </div>
-        <div style={{ bottom: '0', margin: '5px', justifyContent: 'center' }}>
-          {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
-          {
-            gameOver && (
-              <button className="button main" onClick={handleRestart} style={{ minHeight: '50px' }}>Restart Game</button>
-            )
-          }
-          <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ width: '100%', minHeight: '20px' }}>Game Settings</button>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
