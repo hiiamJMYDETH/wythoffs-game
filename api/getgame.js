@@ -14,11 +14,11 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         try {
             const gameId = req.query.id;
-            const gameData = await redisClient.hGetAll(`lobby:${gameId}:history`);
-            if (!gameData || Object.keys(gameData).length === 0) {
+            const lastSnapshot = await redisClient.lIndex(`lobby:${gameId}:history`, -1);
+            if (!lastSnapshot) {
                 return res.status(404).json({ message: "Game not found" });
             }
-            res.status(200).json({message: "Game data retrieved successfully", gameData});
+            res.status(200).json({message: "Game data retrieved successfully", GameData: JSON.parse(lastSnapshot)});
         } catch (error) {
             console.error("Error fetching game data:", error);
             res.status(500).json({ message: "Internal server error" });
