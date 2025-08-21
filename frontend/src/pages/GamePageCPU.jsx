@@ -2,7 +2,6 @@ import { useLocation } from "react-router-dom";
 import { useMobileDetect } from "../components/utilities.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Game from "../components/Game.jsx";
-import MobileGame from "../components/MobileGame.jsx";
 import SideBar from "../components/SideBar.jsx";
 import Background from "../components/Background.jsx";
 
@@ -16,11 +15,7 @@ function GamePageCPU() {
             {/* <Background /> */}
             {isMobile ? (<MobileSideBar />) : (<SideBar />)}
             <div className="center">
-                {isMobile ? (
-                    <MobileGame isCPUPlaying={CPUPlay} />
-                ) : (
-                    <Game isCPUPlaying={CPUPlay} />
-                )}
+                <Game isCPUPlaying={CPUPlay} />
                 <p style={{ position: 'relative', bottom: '0', justifyContent: 'center' }}>@2025 Wythoff's Game Online</p>
             </div>
         </div >
