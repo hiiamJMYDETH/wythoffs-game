@@ -38,22 +38,24 @@ const generateInitialState = (numberOfBalls, totalSeconds, id, player, opponent)
 };
 
 function WarningToggle() {
-  return (
-    <div className="box rule-viol">
-      <h2>You must pick either any amount from one side of the board or
-        equal amounts from both sides of the board.</h2>
-    </div>
-  )
+    return (
+        <div className="box rule-viol">
+            <h2>You must pick either any amount from one side of the board or
+                equal amounts from both sides of the board.</h2>
+        </div>
+    )
 }
 
-function calculateWinner(leftBalls, rightBalls) {
-
-  return null
+async function calculateWinner(leftBalls, rightBalls, id) {
+    if (leftBalls === 0 && rightBalls === 0) {
+        const result = await fetching(`getgame?id=${id}`, 'GET');
+        return result.movedBy != 'system' ? result.movedBy : null;
+    }
+    return null
 }
 
 
 export default function GameOnline({ id, player, opponent }) {
-    const determineTurn = Math.random() < 0.5;
     const isMobile = useMobileDetect();
     const gameInfo = useRef();
 
@@ -61,7 +63,6 @@ export default function GameOnline({ id, player, opponent }) {
     const [minutes, setMinutes] = useState(1);
     const [seconds, setSeconds] = useState(0);
     const [maxSeconds, setMaxSeconds] = useState(minutes * 60 + seconds);
-    const [gameState, setGameState] = useState([]);
     const [history, setHistory] = useState([]);
     const [savedBalls, setSavedBalls] = useState([]);
     const [currentMove, setCurrentMove] = useState(0);
@@ -69,88 +70,89 @@ export default function GameOnline({ id, player, opponent }) {
     const [gameStart, setGameStart] = useState(false);
     const [ruleViolation, setRuleViolation] = useState(false);
     const [gameSettings, setGameSettings] = useState(false);
-    const [playerIsNext, setPlayerIsNext] = useState(determineTurn);
+    const [playerIsNext, setPlayerIsNext] = useState(true);
 
 
-    const leftBalls = gameState?.[currentMove]?.left ?? [];
-    const rightBalls = gameState?.[currentMove]?.right ?? [];
+    const leftBalls = history?.[currentMove]?.left ?? [];
+    const rightBalls = history?.[currentMove]?.right ?? [];
 
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
                 const data = await fetching(`getgame?id=${id}`, 'GET');
-                const gameData = data?.GameData;
+                if (Array.isArray(data.history)) {
+                    setHistory(data.history);
+                }
+                const gameData = data.history[data.history.length - 1];
                 if (!gameData) return;
+                const { move, playerTurn, movedBy } = gameData;
 
-                const { left, right } = gameData;
-                if (!Array.isArray(left) || !Array.isArray(right)) return;
-
-                setGameState(prevState => {
-                    const lastState = prevState[prevState.length - 1];
-                    if (!lastState || JSON.stringify(lastState) !== JSON.stringify(gameData)) {
-                        return [...prevState, gameData];
-                    }
-                    return prevState;
-                });
+                setPlayerIsNext(playerTurn === player);
+                if (movedBy === player) {
+                    setSavedBalls([]);
+                    setCurrentMove(move);
+                }
 
             } catch (err) {
                 console.error(err);
             }
-        }, 2000);
+        }, 1000);
 
         return () => clearInterval(interval);
     }, [id]);
 
-    // function handleBallClick(ball) {
-    //     if (!gameStart) setGameStart(true);
-    //     if (gameOver || gameSettings)
-    //         return; setSavedBalls(prev => prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]);
-    // }
     function handleBallClick(side, ball) {
+        if (!playerIsNext || gameOver) return;
+        if (!gameStart) setGameStart(true);
         const key = `${side}-${ball}`;
         setSavedBalls(prev =>
             prev.includes(key) ? prev.filter(b => b !== key) : [...prev, key]
         );
     }
 
-
-    function handleConfirm() {
+    async function handleConfirm() {
         if (savedBalls.length === 0 || gameSettings) return;
 
+        const lastState = history[currentMove];
+        if (!lastState) return;
 
-        const lastState = gameState[currentMove];
-        const newLeftBalls = lastState.left.filter(b => !savedBalls.includes(b));
-        const newRightBalls = lastState.right.filter(b => !savedBalls.includes(b));
+        const newLeftBalls = lastState.left.filter(b => !savedBalls.includes(`left-${b}`));
+        const newRightBalls = lastState.right.filter(b => !savedBalls.includes(`right-${b}`));
 
         const leftDiff = lastState.left.length - newLeftBalls.length;
         const rightDiff = lastState.right.length - newRightBalls.length;
 
         if ((leftDiff !== rightDiff) && (leftDiff > 0) && (rightDiff > 0)) {
             setRuleViolation(true);
-            setTimeout(() => {
-                setRuleViolation(false);
-            }, 2000);
+            setTimeout(() => setRuleViolation(false), 2000);
             return;
         }
 
+        const nextTurn = playerIsNext ? opponent : player;
 
-        setHistory(prevState => [
-            ...prevState.slice(0, currentMove + 1),
-            { left: newLeftBalls, right: newRightBalls },
-        ]);
+        await fetching("makeamove", "POST", {
+            id,
+            left: newLeftBalls,
+            right: newRightBalls,
+            move: currentMove + 1,
+            playerTurn: nextTurn,
+            movedBy: player
+        });
+
+        setHistory(prev => [...prev, { left: newLeftBalls, right: newRightBalls }]);
+        setCurrentMove(prev => prev + 1);
         setSavedBalls([]);
-        setCurrentMove(prevMove => prevMove + 1);
-
+        setPlayerIsNext(!playerIsNext);
 
         if (newLeftBalls.length === 0 && newRightBalls.length === 0) {
             setGameOver(true);
         }
     }
 
+
     function handleRestart() {
         const init = generateInitialState(numberOfballs, maxSeconds, id, player, opponent);
-        // setHistory([init]);
-        setGameState(init);
+        setHistory(init);
         setSavedBalls([]);
         setCurrentMove(0);
         setGameOver(false);
@@ -158,15 +160,34 @@ export default function GameOnline({ id, player, opponent }) {
     }
 
     let status;
-    const winner = calculateWinner(leftBalls.length, rightBalls.length);
+    const winner = calculateWinner(leftBalls.length, rightBalls.length, id);
     if (winner) {
-        status = "Winner: " + winner;
+        status = "Winner: " + (!playerIsNext ? "You" : opponent);
     }
     else if (!gameOver) {
-        status = "Next player: ";
+        status = "Next player: " + (playerIsNext ? "You" : opponent);
     }
     else {
         status = "Game Over";
+    }
+
+    const moves = history.map((step, move) => {
+        let description;
+        if (move > 0) {
+            description = 'Go to move #' + move;
+        }
+        else {
+            description = 'Go to game start';
+        }
+        return (
+            <li key={move}>
+                <button className="button" onClick={() => jumpTo(move)}>{description}</button>
+            </li>
+        )
+    });
+
+    function jumpTo(nextMove) {
+        setCurrentMove(nextMove);
     }
 
     return (
@@ -176,7 +197,7 @@ export default function GameOnline({ id, player, opponent }) {
         >
             {ruleViolation && <WarningToggle />
             }
-            {(gameState.length === 0 || gameSettings) &&
+            {(history.length === 0 || gameSettings) &&
                 <div className="box" onClick={(e) => e.stopPropagation()}>
                     <p className="settings-text">Max Number of Balls in Game</p>
                     <div className="slider-container" style={{ display: "flex" }}>
@@ -217,7 +238,7 @@ export default function GameOnline({ id, player, opponent }) {
                     <button className="button" onClick={() => {
                         const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
                         const init = generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
-                        setHistory([init]);
+                        setHistory(init);
                         setCurrentMove(0);
                         setGameSettings(false);
                     }}>
@@ -225,7 +246,7 @@ export default function GameOnline({ id, player, opponent }) {
                     </button>
                 </div>
             }
-            {gameState.length != 0 &&
+            {history.length != 0 &&
                 <>
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
@@ -239,9 +260,9 @@ export default function GameOnline({ id, player, opponent }) {
                             {/* <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} /> */}
                             <p style={{ fontWeight: 'bold' }}>{status}</p>
                         </div>
-                        {/* <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>
+                        <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>
                             <ol>{moves}</ol>
-                        </div> */}
+                        </div>
                         <div style={{ bottom: '0', margin: '5px', justifyContent: 'center' }}>
                             {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
                             {
