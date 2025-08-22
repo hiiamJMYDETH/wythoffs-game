@@ -5,7 +5,7 @@ import { Counter, useMobileDetect, fetching } from "./utilities.jsx";
 import "../styles/Game.css";
 import "../styles/page.css";
 
-const generateInitialState = (numberOfBalls, totalSeconds, id, playerID) => {
+const generateInitialState = (numberOfBalls, totalSeconds, id, player, opponent) => {
     const half = numberOfBalls / 2;
 
     let leftCount, rightCount;
@@ -27,7 +27,8 @@ const generateInitialState = (numberOfBalls, totalSeconds, id, playerID) => {
         numberOfBalls,
         totalSeconds,
         id,
-        playerId: playerID
+        player,
+        opponent
     });
 
     return [{
@@ -35,6 +36,20 @@ const generateInitialState = (numberOfBalls, totalSeconds, id, playerID) => {
         right: rightArray
     }];
 };
+
+function WarningToggle() {
+  return (
+    <div className="box rule-viol">
+      <h2>You must pick either any amount from one side of the board or
+        equal amounts from both sides of the board.</h2>
+    </div>
+  )
+}
+
+function calculateWinner(leftBalls, rightBalls) {
+
+  return null
+}
 
 
 export default function GameOnline({ id, player, opponent }) {
@@ -86,21 +101,24 @@ export default function GameOnline({ id, player, opponent }) {
         return () => clearInterval(interval);
     }, [id]);
 
-    function handleBallClick(ball) {
-        if (!gameStart) {
-            setGameStart(true);
-        }
-        if (gameOver || gameSettings) return;
+    // function handleBallClick(ball) {
+    //     if (!gameStart) setGameStart(true);
+    //     if (gameOver || gameSettings)
+    //         return; setSavedBalls(prev => prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]);
+    // }
+    function handleBallClick(side, ball) {
+        const key = `${side}-${ball}`;
         setSavedBalls(prev =>
-            prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
+            prev.includes(key) ? prev.filter(b => b !== key) : [...prev, key]
         );
     }
+
 
     function handleConfirm() {
         if (savedBalls.length === 0 || gameSettings) return;
 
 
-        const lastState = history[currentMove];
+        const lastState = gameState[currentMove];
         const newLeftBalls = lastState.left.filter(b => !savedBalls.includes(b));
         const newRightBalls = lastState.right.filter(b => !savedBalls.includes(b));
 
@@ -116,13 +134,12 @@ export default function GameOnline({ id, player, opponent }) {
         }
 
 
-        setHistory(prevHistory => [
-            ...prevHistory.slice(0, currentMove + 1),
+        setHistory(prevState => [
+            ...prevState.slice(0, currentMove + 1),
             { left: newLeftBalls, right: newRightBalls },
         ]);
         setSavedBalls([]);
         setCurrentMove(prevMove => prevMove + 1);
-        setUserIsNext(!userIsNext);
 
 
         if (newLeftBalls.length === 0 && newRightBalls.length === 0) {
@@ -131,13 +148,25 @@ export default function GameOnline({ id, player, opponent }) {
     }
 
     function handleRestart() {
-        const init = generateInitialState(numberOfballs, maxSeconds, id, player);
+        const init = generateInitialState(numberOfballs, maxSeconds, id, player, opponent);
         // setHistory([init]);
         setGameState(init);
         setSavedBalls([]);
         setCurrentMove(0);
         setGameOver(false);
         setGameStart(false);
+    }
+
+    let status;
+    const winner = calculateWinner(leftBalls.length, rightBalls.length);
+    if (winner) {
+        status = "Winner: " + winner;
+    }
+    else if (!gameOver) {
+        status = "Next player: ";
+    }
+    else {
+        status = "Game Over";
     }
 
     return (
@@ -187,7 +216,7 @@ export default function GameOnline({ id, player, opponent }) {
                     <br />
                     <button className="button" onClick={() => {
                         const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
-                        const init = generateInitialState(numberOfballs, totalSeconds, id, player);
+                        const init = generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
                         setHistory([init]);
                         setCurrentMove(0);
                         setGameSettings(false);
@@ -207,7 +236,7 @@ export default function GameOnline({ id, player, opponent }) {
                     </div>
                     <div className="status" ref={gameInfo}>
                         <div style={{ display: 'flex' }}>
-                            <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
+                            {/* <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} /> */}
                             <p style={{ fontWeight: 'bold' }}>{status}</p>
                         </div>
                         {/* <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>

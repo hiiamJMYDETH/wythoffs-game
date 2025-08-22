@@ -68,14 +68,20 @@ function Game({ isCPUPlaying }) {
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
 
-  function handleBallClick(ball) {
-    if (!gameStart) {
-      setGameStart(true);
-    }
-    if (gameOver || history.length != currentMove + 1 || gameSettings) return;
-    console.log("History:", history);
+  // function handleBallClick(ball) {
+  //   if (!gameStart) {
+  //     setGameStart(true);
+  //   }
+  //   if (gameOver || history.length != currentMove + 1 || gameSettings) return;
+  //   console.log("History:", history);
+  //   setSavedBalls(prev =>
+  //     prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
+  //   );
+  // }
+  function handleBallClick(side, ball) {
+    const key = `${side}-${ball}`;
     setSavedBalls(prev =>
-      prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
+      prev.includes(key) ? prev.filter(b => b !== key) : [...prev, key]
     );
   }
 
