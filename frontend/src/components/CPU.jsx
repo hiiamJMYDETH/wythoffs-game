@@ -1,28 +1,20 @@
 function CPUPlay(board) {
-    const leftBalls = board.left;
-    const rightBalls = board.right;
-    const map = [leftBalls, rightBalls];
-    let i = 0, j = 0;
-    let tempLeft = [], tempRight = [];
+  const { left, right } = board;
 
-    while (i < leftBalls.length && j < rightBalls.length) {
-        tempLeft.push(leftBalls[i]);
-        tempRight.push(rightBalls[j]);
-        i++;
-        j++;
-    }
-    const finalSelection = [...tempLeft, ...tempRight];
-    map.push(finalSelection);
+  const takeLeft = left.map(b => `left-${b}`);
 
-    let max = 0;
-    for (let j = 0; j < map.length; j++) {
-        if (map[j].length > map[max].length) {
-            max = j;
-        }
-    }
-    console.log("deck", map);
-    return map[max]; 
+  const takeRight = right.map(b => `right-${b}`);
+
+  const minPairs = Math.min(left.length, right.length);
+  const takeBoth = [];
+  for (let i = 0; i < minPairs; i++) {
+    takeBoth.push(`left-${left[i]}`, `right-${right[i]}`);
+  }
+
+  const options = [takeLeft, takeRight, takeBoth];
+  const bestMove = options.reduce((a, b) => (b.length > a.length ? b : a), []);
+
+  return bestMove;
 }
-
 
 export default CPUPlay;
