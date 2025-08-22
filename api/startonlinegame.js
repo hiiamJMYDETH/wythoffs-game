@@ -28,7 +28,9 @@ export default async function handler(req, res) {
         timestamp: Date.now(),
     };
 
-    await redisClient.rPush(`lobby:${id}:history`, JSON.stringify(snapshot));
+    await redisClient.set(`lobby:${id}:start`, JSON.stringify(snapshot)); 
+    await redisClient.lPop(`lobby:${id}:history`);
+    await redisClient.rPush(`lobby:${id}:history`, JSON.stringify({left, right, move: 0, playerTurn, movedBy: 'system'}));
 
     return res.status(200).json({ message: "Game state appended to history" });
 }
