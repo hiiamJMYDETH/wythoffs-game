@@ -68,17 +68,6 @@ function Game({ isCPUPlaying }) {
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
 
-  // function handleBallClick(ball) {
-  //   if (!gameStart) {
-  //     setGameStart(true);
-  //   }
-  //   if (gameOver || history.length != currentMove + 1 || gameSettings) return;
-  //   console.log("History:", history);
-  //   setSavedBalls(prev =>
-  //     prev.includes(ball) ? prev.filter(b => b !== ball) : [...prev, ball]
-  //   );
-  // }
-
   function handleBallClick(side, ball) {
     const key = `${side}-${ball}`;
     setSavedBalls(prev =>
@@ -98,7 +87,6 @@ function Game({ isCPUPlaying }) {
     const newRightBalls = lastState.right.filter(b => !savedBalls.includes(`right-${b}`));
 
 
-    // ✅ Rule check: must take same number from both sides
     const leftDiff = lastState.left.length - newLeftBalls.length;
     const rightDiff = lastState.right.length - newRightBalls.length;
 
