@@ -14,9 +14,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         try {
             const sessionId = req.headers['authorization']?.replace('Session ', '');
-            console.log("Session ID:", sessionId);
             const sessionData = await redisClient.hGetAll(`session:${sessionId}`);
-            console.log("Session Data:", sessionData);
             if (!sessionData || !sessionData.user_id) {
                 return res.status(401).json({ message: "Unauthorized" });
             }
