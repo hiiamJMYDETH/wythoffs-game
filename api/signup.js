@@ -1,71 +1,74 @@
 import { connectToDatabase } from "./config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import redisClient from "./config/redis.js";
 import crypto from "crypto"; // Import the crypto module for generating UUIDs
-import { v4 as uuidv4 } from 'uuid'; // Import the uuid module for generating UUIDs
+import { database } from "./config/firebase.js"; // import the shared Firebase instance
+import { ref, set } from "firebase/database";
 
 dotenv.config();
 
-async function hashRedis(name, email, id) {
-    await redisClient.hSet(`user:${id}`, {name, email, id});
+// Store user info in Firebase
+async function storeUserInFirebase(name, email, id) {
+  await set(ref(database, `users/${id}`), { name, email, id });
+}
+
+// Store session in Firebase with expiration
+async function storeSessionInFirebase(sessionId, userId) {
+  const expiresAt = Date.now() + 3600 * 1000; // 1 hour
+  await set(ref(database, `sessions/${sessionId}`), { user_id: userId, expiresAt });
 }
 
 export default async function handler(req, res) {
-    // Enable CORS headers
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    // res.setHeader("Access-Control-Allow-Credentials", "true");
-    
-    if (req.method === "OPTIONS") {
-        res.status(200).end();
-        return;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Missing username/email/password" });
     }
 
-    if (req.method != "POST") {
-        return res.status(405).json({ error: "Method not allowed" });
+    // Connect to PostgreSQL
+    const client = await connectToDatabase();
+
+    // Check if user already exists
+    const existing = await client.query(
+      "SELECT * FROM users WHERE email = $1 OR username = $2",
+      [email, name]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ message: "Email or username already exists" });
     }
 
-    try {
+    // Generate new user ID (Postgres or UUID)
+    const userId = crypto.randomUUID();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        const { name, email, password } = req.body;
-        if (!name || !email || !password) {
-            return res.status(400).json({ error: 'Missing username/email/password' });
-        }
+    await client.query(
+      "INSERT INTO users (username, email, usr_pwd, creation_date, id) VALUES ($1, $2, $3, CURRENT_DATE, $4)",
+      [name, email, hashedPassword, userId]
+    );
 
-        const userId = await redisClient.incr("user_id_counter"); 
-        // const userId = crypto.randomUUID(); // Generate a unique user ID
-        console.log("Generated User ID:", userId);
+    // Store user in Firebase
+    await storeUserInFirebase(name, email, userId);
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const values = [name, email, hashedPassword, userId];
+    // Create session in Firebase
+    const sessionId = crypto.randomUUID();
+    await storeSessionInFirebase(sessionId, userId);
 
-        const client = await connectToDatabase();
-        const result = await client.query(
-            "INSERT INTO users (username, email, usr_pwd, creation_date, id) VALUES ($1, $2, $3, CURRENT_DATE, $4) ON CONFLICT (id) DO NOTHING",
-            values
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(401).json({ message: "Email already exists" });
-        }
-
-        // const token = jwt.sign({ user_id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
-        // await hashRedis(name, email);
-        await hashRedis(user.username, user.email, user.id);
-
-        const sessionId = crypto.randomUUID();
-        await redisClient.hSet(`session:${sessionId}`, {user_id: user.id});
-        await redisClient.expire(`session:${sessionId}`, 3600); // Set session expiration to 1 hour
-
-        res.json({ message: "Successfully created an account", sessionId });
-    } catch (error) {
-        console.error("🚨 Error:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
-    } finally {
-        if (redisClient) {
-            await redisClient.disconnect(); // Ensure Redis connection is closed after each request
-        }
-    }
+    res.status(201).json({ message: "Successfully created an account", sessionId });
+  } catch (error) {
+    console.error("🚨 Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 }
