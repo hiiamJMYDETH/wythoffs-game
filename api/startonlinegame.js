@@ -10,9 +10,9 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Only POST requests allowed" });
 
 
-    const { left, right, numberOfBalls, totalSeconds, id, player, opponent } = req.body;
+    const { left, right, numberOfballs, totalSeconds, id, player, opponent } = req.body;
 
-    if (!left || !right || !numberOfBalls || !totalSeconds || !id || !player || !opponent) {
+    if (!left || !right || !numberOfballs || !totalSeconds || !id || !player || !opponent) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const snapshot = {
         left,
         right,
-        numberOfBalls,
+        numberOfballs,
         totalSeconds,
         playerTurn,
         timestamp: Date.now(),

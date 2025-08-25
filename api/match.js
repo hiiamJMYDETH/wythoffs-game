@@ -53,7 +53,8 @@ export default async function handler(req, res) {
       "createdAt", now,
       "status", "active",
       "playerCount", 2,
-      "expiresAt", expireTime
+      "expiresAt", expireTime,
+      "winner", ""  -- empty until game ends
     )
 
     -- Initialize empty history list with first state

@@ -17,21 +17,43 @@ function SideBar() {
     const token = localStorage.getItem('sessionId') || null;
     var user = localStorage.getItem('user') || null;
 
-    useEffect(() => {
-        async function loadUsers() {
-            try {
-              const users = await fetching('loaduser');
-              console.log('Users:', users);
-              localStorage.setItem('user', JSON.stringify(users));
+    // useEffect(() => {
+    //     async function loadUsers() {
+    //         try {
+    //             const users = await fetching('loaduser');
+    //             console.log('Users:', users);
+    //             localStorage.setItem('user', JSON.stringify(users));
 
-            } catch (error) {
-              console.error('Error loading users:', error.message);
-                localStorage.removeItem('sessionId');
-                localStorage.removeItem('user');
-                user = null;
+    //         } catch (error) {
+    //             console.error('Error loading users:', error.message);
+    //             localStorage.removeItem('sessionId');
+    //             localStorage.removeItem('user');
+    //             user = null;
+    //         }
+    //     }
+    //     loadUsers();
+    // }, [token]);
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                try {
+                    const users = await fetching('loaduser');
+                    console.log('Users:', users);
+                    localStorage.setItem('user', JSON.stringify(users));
+
+                } catch (error) {
+                    console.error('Error loading users:', error.message);
+                    localStorage.removeItem('sessionId');
+                    localStorage.removeItem('user');
+                    user = null;
+                }
+
+            } catch (err) {
+                console.error(err);
             }
-          }
-          loadUsers();
+        }, 1000);
+
+        return () => clearInterval(interval);
     }, [token]);
 
     useEffect(() => {
