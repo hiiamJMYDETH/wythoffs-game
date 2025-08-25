@@ -33,3 +33,6 @@ hoggatt.pdf
 node_modules
 topo_order_commits.py
 topo-ordered-commits-test-suite/
+dataconnect
+dataconnect-generated
+.firebase
