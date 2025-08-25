@@ -22,6 +22,10 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Lobby not found or no history available" });
     }
     console.log("Last snapshot:", lastSnapshot);
+    const parsedSnapshot = JSON.parse(lastSnapshot);
+    if (parsedSnapshot.left === left && parsedSnapshot.right === right) {
+        return res.status(401).json({ error: "No changes made" });
+    }
     // const lastState = JSON.parse(lastSnapshot);
     // if (playerTurn !== userId) {
     //     return res.status(403).json({ error: "Not your turn" });
