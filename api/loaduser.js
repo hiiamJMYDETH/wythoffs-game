@@ -1,6 +1,7 @@
 // pages/api/loaduser.js
 import { ref, child, get } from "firebase/database";
 import { database } from "./config/firebase.js"; // import the shared Firebase instance
+import checkSession from "./config/checksession.js";
 
 // Timeout helper
 function timeout(ms, promise) {
@@ -31,23 +32,9 @@ export default async function handler(req, res) {
     const sessionId = req.headers["authorization"]?.replace("Session ", "");
     if (!sessionId) return res.status(401).json({ message: "Unauthorized" });
 
-    const sessionSnap = await timeout(
-      5000,
-      get(child(ref(database), `sessions/${sessionId}`))
-    );
-
-    if (!sessionSnap.exists() || !sessionSnap.val().user_id) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const userId = sessionSnap.val().user_id;
-
-    const userSnap = await timeout(
-      5000,
-      get(child(ref(database), `users/${userId}`))
-    );
-
-    res.status(200).json(userSnap.exists() ? userSnap.val() : {});
+    const userId = await checkSession(sessionId);
+    if (!userId) return res.status(401).json({ message: "Invalid or expired session" });
+    res.status(200).json({ message: "Authorized", userId });
   } catch (error) {
     console.error("Error in loaduser:", error);
     res.status(500).json({ message: error.message });

@@ -6,16 +6,20 @@ import PlayImage from "../assets/Play.svg";
 import UserDefault from "../assets/User default.svg";
 import SettingsIcon from "../assets/Settings.svg";
 import HelpIcon from "../assets/Help.svg";
+import { set } from "firebase/database";
 
 
 function SideBar() {
     const [playOpts, setPlayOpts] = useState(false);
+    const [user, setUser] = useState(() => {
+        const stored = localStorage.getItem('user');
+        return stored ? JSON.parse(stored) : null;
+    })
     const navigate = useNavigate();
     const play = useRef(null);
     const playMenu = useRef(null);
     const menu = useRef(null);
     const token = localStorage.getItem('sessionId') || null;
-    var user = localStorage.getItem('user') || null;
 
     useEffect(() => {
         async function loadUsers() {
@@ -23,12 +27,13 @@ function SideBar() {
               const users = await fetching('loaduser');
               console.log('Users:', users);
               localStorage.setItem('user', JSON.stringify(users));
+              setUser(users);
 
             } catch (error) {
               console.error('Error loading users:', error.message);
                 localStorage.removeItem('sessionId');
                 localStorage.removeItem('user');
-                user = null;
+                setUser(null);
             }
           }
           loadUsers();
