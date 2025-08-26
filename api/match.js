@@ -1,108 +1,91 @@
 import redisClient from "./config/redis.js";
-import { v4 as uuidv4 } from "uuid";
+import checkSession from "./config/checksession.js";
+import { database } from "./config/firebase.js";
+import { ref, set, get } from "firebase/database";
+
+async function findOrCreateGame(playerId) {
+  const luaScript = `
+    local waiting = redis.call("LPOP", "matchmaking:queue")
+    if waiting and waiting ~= ARGV[1] then
+      local gameId = redis.call("INCR", "game:id:counter")
+      -- store gameId for both players in Redis
+      redis.call("HSET", "player:" .. waiting, "gameId", gameId)
+      redis.call("HSET", "player:" .. ARGV[1], "gameId", gameId)
+      return { tostring(gameId), waiting, ARGV[1] }
+    else
+      redis.call("RPUSH", "matchmaking:queue", ARGV[1])
+      return nil
+    end
+  `;
+
+  const result = await redisClient.eval(luaScript, {
+    keys: [],
+    arguments: [String(playerId)],
+  });
+
+  if (!result) return null;
+
+  const [gameId, p1, p2] = result;
+
+  const gameRef = ref(database, `games/${gameId}`);
+  const gameSnap = await get(gameRef);
+  if (!gameSnap.exists()) {
+    const gameData = {
+      gameId,
+      players: [p1, p2],
+      createdAt: Date.now(),
+      state: "waitingToStart",
+    };
+    await set(gameRef, gameData);
+  }
+
+  return { gameId, players: [p1, p2] };
+}
+
+async function loadGame(playerId) {
+  const gameId = await redisClient.hGet(`player:${playerId}`, "gameId");
+  if (gameId) {
+    const gameRef = ref(database, `games/${gameId}`);
+    const gameSnap = await get(gameRef);
+    if (gameSnap.exists()) return gameSnap.val();
+  }
+
+  const gameRef = ref(database, "games");
+  const gameSnap = await get(gameRef);
+  if (!gameSnap.exists()) return null;
+  const games = gameSnap.val();
+  for (const [id, game] of Object.entries(games)) {
+    if (game.players && game.players.includes(playerId)) return game;
+  }
+  return null;
+}
+
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Only POST allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Only POST allowed" });
 
-  const playerId = String(req.body?.userId);
-  if (!playerId) return res.status(400).json({ error: "Missing userId" });
-
-  const lua = `
-    local queueKey = KEYS[1]
-    local player = ARGV[1]
-    local now = ARGV[2]
-    local expireTime = ARGV[3]
-    local lobbyId = ARGV[4]
-
-    -- Check if player already in any lobby
-    local lobbyKeys = redis.call("KEYS", "lobby:*:users")
-    for _, key in ipairs(lobbyKeys) do
-      local members = redis.call("SMEMBERS", key)
-      for _, p in ipairs(members) do
-        if p == player then
-          return {"ALREADY_IN_LOBBY", key}
-        end
-      end
-    end
-
-    -- Check if player already in queue
-    local pos = redis.call("LPOS", queueKey, player)
-    if not pos then
-      redis.call("RPUSH", queueKey, player)
-    end
-
-    -- Check if at least 2 players in queue
-    local length = redis.call("LLEN", queueKey)
-    if length < 2 then
-      return {}
-    end
-
-    -- Pop two players atomically
-    local players = redis.call("LPOP", queueKey, 2)
-    local p1, p2 = players[1], players[2]
-
-    -- Create lobby set and metadata
-    redis.call("SADD", "lobby:"..lobbyId..":users", p1, p2)
-    redis.call("HSET", "lobby:"..lobbyId..":meta",
-      "createdAt", now,
-      "status", "active",
-      "playerCount", 2,
-      "expiresAt", expireTime
-    )
-
-    -- Initialize empty history list with first state
-    local initialState = cjson.encode({
-      left = {},
-      right = {},
-      move = 0
-    })
-    redis.call("RPUSH", "lobby:"..lobbyId..":history", initialState)
-
-    return {lobbyId, p1, p2}
-  `;
-
-
-  const lobbyId = uuidv4();
-  const now = Date.now();
-  const expireTime = now + 3600000;
+  const sessionId = req.body?.sessionId || "";
+  const playerId = await checkSession(sessionId);
+  if (!playerId) return res.status(401).json({ error: "Invalid session" });
 
   try {
-    const result = await redisClient.eval(lua, {
-      keys: ["queue:queue"],
-      arguments: [playerId, now.toString(), expireTime.toString(), lobbyId]
-    });
-
-    if (!result || result.length === 0) {
-      return res.status(200).json({ message: "Waiting for opponent..." });
+    let game = await loadGame(playerId);
+    if (game) {
+      return res.status(200).json({ message: "Already in a game", ...game });
     }
 
-    if (result[0] === "ALREADY_IN_LOBBY") {
-      const lobbyKey = result[1];
-      const existingLobbyId = lobbyKey.match(/lobby:(.*):users/)[1];
-      const users = await redisClient.sMembers(`lobby:${existingLobbyId}:users`);
-      const opponent = users.find(u => u !== playerId) || null;
-      return res.status(200).json({
-        message: "Already in a lobby",
-        lobbyId: existingLobbyId,
-        opponent
-      });
-    }
+    game = await findOrCreateGame(playerId);
+    if (!game) return res.status(200).json({ message: "Waiting" });
 
-    const [createdLobbyId, player1, player2] = result;
-    return res.status(200).json({
-      lobbyId: createdLobbyId,
-      player: playerId,
-      opponent: playerId === player1 ? player2 : player1
-    });
-
+    return res.status(200).json({ message: "Found a pair", ...game });
   } catch (err) {
-    console.error("Lua/Redis error:", err);
+    console.error("Matchmaking error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 }

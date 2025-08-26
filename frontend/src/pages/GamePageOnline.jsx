@@ -1,101 +1,88 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMobileDetect, fetching } from "../components/utilities.jsx";
 import { useNavigate } from "react-router-dom";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import GameOnline from "../components/GameOnline.jsx";
 import SideBar from "../components/SideBar.jsx";
 
-async function handleGameState(userId) {
-    const response = await fetching('match', 'POST', { userId: userId });
+async function handleGameState(sessionId) {
+    const response = await fetching("match", "POST", { sessionId });
     return response;
 }
 
 function GameLobby() {
-    const isMobile = useMobileDetect();
-
     return (
-        <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            textAlign: "center",
-            padding: "20px",
-            boxSizing: "border-box"
-        }}>
-            <div>
-                <p>Loading...</p>
-            </div>
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100vh",
+                textAlign: "center",
+                padding: "20px",
+                boxSizing: "border-box",
+            }}
+        >
+            <p>Searching for a match...</p>
         </div>
-    )
+    );
 }
 
 function GamePageOnline() {
+    const navigate = useNavigate();
     const sessionId = localStorage.getItem("sessionId") || null;
-    if (!sessionId) {
-        localStorage.removeItem("user");
-        localStorage.removeItem("sessionId");
-        window.location.href = "/login";
-    }
-    const user = localStorage.getItem("user") || null;
-    const userObj = user ? JSON.parse(user) : null;
+    const user = JSON.parse(localStorage.getItem("user")) || null;
+    const userId = user?.id || null;
     const [game, setGame] = useState(null);
-    const [userId, setUserId] = useState(null);
     const [opponent, setOpponent] = useState(null);
     const isMobile = useMobileDetect();
-    const navigate = useNavigate();
+    // const [out, setOut] = useState(false);
+
+    const intervalRef = useRef(null);
+    const timeoutRef = useRef(null);
 
     useEffect(() => {
-        if (!userObj) {
+        if (!sessionId) {
             localStorage.removeItem("user");
+            localStorage.removeItem("sessionId");
             navigate("/login");
         }
-        setUserId(userObj.id);
-    }, [user, navigate]);
+    }, [sessionId, navigate]);
 
     useEffect(() => {
-        if (!userId) return; // Wait until userId is ready
-
-        let intervalId;
-        let timeoutId;
+        if (!sessionId) return;
 
         async function fetchGame() {
             try {
-                const queries = await handleGameState(userId);
+                const result = await handleGameState(sessionId);
 
-                if (queries.lobbyId) {
-                    setGame(queries.lobbyId);
-                    setOpponent(queries.opponent || null);
-
-                    // Stop polling once we found a match
-                    clearInterval(intervalId);
+                if (result?.gameId) {
+                    setGame(result.gameId);
+                    const players = result.players;
+                    setOpponent(players.find(p => p !== userId));
+                    clearInterval(intervalRef.current);
+                    clearTimeout(timeoutRef.current);
                 }
             } catch (err) {
                 console.error("Failed to fetch game state:", err);
             }
         }
 
-        // Initial fetch immediately
         fetchGame();
 
-        // Keep checking every 3 seconds
-        intervalId = setInterval(fetchGame, 3000);
+        intervalRef.current = setInterval(fetchGame, 3000);
 
-        // Stop checking after 60 seconds
-        timeoutId = setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
             console.warn("⏳ Matchmaking timed out after 60 seconds.");
-            clearInterval(intervalId);
+            clearInterval(intervalRef.current);
         }, 60000);
 
-        // Cleanup on unmount or userId change
         return () => {
-            clearInterval(intervalId);
-            clearTimeout(timeoutId);
+            clearInterval(intervalRef.current);
+            clearTimeout(timeoutRef.current);
         };
-
-    }, [userId]); // ✅ Only start polling when userId changes
-
+    }, [sessionId]);
 
 
     return (
@@ -104,10 +91,9 @@ function GamePageOnline() {
             <div className="center">
                 {game ? (
                     <GameOnline id={game} player={userId} opponent={opponent} />
-                )
-                    : (
-                        < GameLobby />)}
-                {/* <GameOnline /> */}
+                ) : (
+                    <GameLobby />
+                )}
                 <p style={{ position: "relative", bottom: "0", justifyContent: "center" }}>
                     @2025 Wythoff's Game Online
                 </p>
