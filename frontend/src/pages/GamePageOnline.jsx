@@ -32,8 +32,11 @@ function GameLobby() {
 function GamePageOnline() {
     const navigate = useNavigate();
     const sessionId = localStorage.getItem("sessionId") || null;
-    const user = JSON.parse(localStorage.getItem("user")) || null;
-    const userId = user?.id || null;
+    const [user, setUser] = useState(() => {
+        const stored = localStorage.getItem('user');
+        return stored ? JSON.parse(stored) : null;
+    });
+    const userId = user.userId ? user.userId : null;
     const [game, setGame] = useState(null);
     const [opponent, setOpponent] = useState(null);
     const isMobile = useMobileDetect();
@@ -60,7 +63,7 @@ function GamePageOnline() {
                 if (result?.gameId) {
                     setGame(result.gameId);
                     const players = result.players;
-                    setOpponent(players.find(p => p !== userId));
+                    setOpponent(players.find(p => p !== user));
                     clearInterval(intervalRef.current);
                     clearTimeout(timeoutRef.current);
                 }
