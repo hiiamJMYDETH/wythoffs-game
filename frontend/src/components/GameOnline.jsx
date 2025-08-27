@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import Player from "./Player.jsx";
 import { Counter, useMobileDetect, fetching } from "./utilities.jsx";
+import { database } from "../../firebase.js";
+import { ref, onChildAdded, off, get } from "firebase/database";
 import "../styles/Game.css";
 import "../styles/page.css";
 
@@ -49,7 +51,7 @@ function WarningToggle() {
 async function calculateWinner(leftBalls, rightBalls, id) {
     if (leftBalls === 0 && rightBalls === 0) {
         const result = await fetching(`getgame?id=${id}`, 'GET');
-        return result.movedBy != 'system' ? result.movedBy : null;
+        return result.movedBy !== 'system' ? result.movedBy : null;
     }
     return null
 }
@@ -71,34 +73,27 @@ export default function GameOnline({ id, player, opponent }) {
     const [ruleViolation, setRuleViolation] = useState(false);
     const [gameSettings, setGameSettings] = useState(false);
     const [playerIsNext, setPlayerIsNext] = useState(true);
-
+    const [winner, setWinner] = useState(null);
 
     const leftBalls = history?.[currentMove]?.left ?? [];
     const rightBalls = history?.[currentMove]?.right ?? [];
 
     useEffect(() => {
-        const interval = setInterval(async () => {
-            try {
-                const data = await fetching(`getgame?id=${id}`, 'GET');
-                if (Array.isArray(data.history)) {
-                    setHistory(data.history);
-                }
-                const gameData = data.history[data.history.length - 1];
-                if (!gameData) return;
-                const { move, playerTurn, movedBy } = gameData;
+        if (!id) return;
 
-                setPlayerIsNext(playerTurn === player);
-                if (movedBy === player) {
-                    setSavedBalls([]);
-                    setCurrentMove(move);
-                }
+        const historyRef = ref(database, `games/${id}/history`);
 
-            } catch (err) {
-                console.error(err);
-            }
-        }, 1000);
+        get(historyRef).then(snapshot => {
+            const existing = snapshot.val() || [];
+            setHistory(existing);
+        });
 
-        return () => clearInterval(interval);
+        const unsubscribe = onChildAdded(historyRef, snapshot => {
+            const newMove = snapshot.val();
+            setHistory(prev => [...prev, newMove]);
+        });
+
+        return () => off(historyRef, "child_added", unsubscribe);
     }, [id]);
 
     function handleBallClick(side, ball) {
@@ -159,8 +154,16 @@ export default function GameOnline({ id, player, opponent }) {
         setGameStart(false);
     }
 
+    useEffect(() => {
+        async function fetchWinner() {
+            const win = await calculateWinner(leftBalls.length, rightBalls.length, id);
+            setWinner(win);
+        }
+        fetchWinner();
+    }, [winner]);
+
     let status;
-    const winner = calculateWinner(leftBalls.length, rightBalls.length, id);
+    console.log("Winner: ", winner);
     if (winner) {
         status = "Winner: " + (!playerIsNext ? "You" : opponent);
     }
