@@ -77,24 +77,47 @@ export default function GameOnline({ id, player, opponent }) {
 
     const leftBalls = history?.[currentMove]?.left ?? [];
     const rightBalls = history?.[currentMove]?.right ?? [];
+    console.log("History: ", history);
 
     useEffect(() => {
         if (!id) return;
 
         const historyRef = ref(database, `games/${id}/history`);
 
-        get(historyRef).then(snapshot => {
-            const existing = snapshot.val() || [];
-            setHistory(existing);
+        const normalizeMove = (move) => ({
+            ...move,
+            left: move.left || [],
+            right: move.right || []
         });
 
-        const unsubscribe = onChildAdded(historyRef, snapshot => {
-            const newMove = snapshot.val();
-            setHistory(prev => [...prev, newMove]);
+        const unsubscribe = onChildAdded(historyRef, (snapshot) => {
+            const rawmove = snapshot.val();
+            const newMove = normalizeMove(rawmove);
+
+            setHistory(prev => {
+                // Deduplicate by comparing content
+                const exists = prev.some(
+                    m =>
+                        JSON.stringify(m.move) === JSON.stringify(newMove.move) &&
+                        m.playerTurn === newMove.playerTurn &&
+                        m.movedBy === newMove.movedBy
+                );
+                if (exists) return prev;
+
+                const updated = [...prev, newMove];
+
+                setPlayerIsNext(String(newMove.playerTurn) === String(player));
+                if (String(newMove.movedBy) === String(player)) {
+                    setSavedBalls([]);
+                    setCurrentMove(newMove.move);
+                }
+
+                return updated;
+            });
         });
 
         return () => off(historyRef, "child_added", unsubscribe);
-    }, [id]);
+    }, [id, player]);
 
     function handleBallClick(side, ball) {
         if (!playerIsNext || gameOver) return;
@@ -134,7 +157,6 @@ export default function GameOnline({ id, player, opponent }) {
             movedBy: player
         });
 
-        setHistory(prev => [...prev, { left: newLeftBalls, right: newRightBalls }]);
         setCurrentMove(prev => prev + 1);
         setSavedBalls([]);
         setPlayerIsNext(!playerIsNext);
@@ -163,7 +185,7 @@ export default function GameOnline({ id, player, opponent }) {
     }, [winner]);
 
     let status;
-    console.log("Winner: ", winner);
+    console.log("Player is next: ", playerIsNext);
     if (winner) {
         status = "Winner: " + (!playerIsNext ? "You" : opponent);
     }

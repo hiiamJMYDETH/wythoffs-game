@@ -19,7 +19,6 @@ export default async function handler(req, res) {
             const histRef = ref(database, `games/${gameId}/history`);
             const histSnap = await get(histRef);
             if (!histSnap.exists()) return res.status(404).json({message: "Does not exist"});
-            console.log("HistSnap: ", histSnap);
             res.status(200).json({message: "Game not ready"});
 
         } catch (error) {

@@ -62,8 +62,13 @@ function GamePageOnline() {
 
                 if (result?.gameId) {
                     setGame(result.gameId);
-                    const players = result.players;
-                    setOpponent(players.find(p => p !== user));
+                    const playersArray = Array.isArray(result.players)
+                        ? result.players
+                        : Object.values(result.players || {});
+
+                    const opponentId = playersArray.find(p => String(p) !== String(userId));
+                    setOpponent(opponentId || null);
+
                     clearInterval(intervalRef.current);
                     clearTimeout(timeoutRef.current);
                 }
