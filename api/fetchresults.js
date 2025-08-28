@@ -31,14 +31,11 @@ export default async function handler(req, res) {
 
     if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
 
-    // Mark the game as completed in Firebase
     await set(gameRef, { ...gameSnap.val(), state: "completed" });
     const game = gameSnap.val();
 
-    // Save game results to Postgres
     await fetchGameResults(client, game);
 
-    // Fetch history from Firebase
     const histRef = ref(database, `games/${gameId}/history`);
     const histSnap = await get(histRef);
     if (!histSnap.exists()) return res.status(404).json({ message: "Game history does not exist" });
@@ -50,7 +47,6 @@ export default async function handler(req, res) {
     const winnerId = lastState.movedBy === player ? player : opponent;
     const loserId = lastState.movedBy === player ? opponent : player;
 
-    // Start a transaction for updating both users
     try {
         await client.query('BEGIN');
 

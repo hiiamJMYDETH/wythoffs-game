@@ -13,11 +13,11 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
     let leftCount, rightCount;
     const isLeftLarger = Math.random() < 0.5;
     if (isLeftLarger) {
-        leftCount = Math.floor(Math.random() * (numberOfBalls - half) + half);
-        rightCount = numberOfBalls - leftCount;
+        leftCount = Math.floor(Math.random() * (numberOfballs - half) + half);
+        rightCount = numberOfballs - leftCount;
     } else {
-        rightCount = Math.floor(Math.random() * (numberOfBalls - half) + half);
-        leftCount = numberOfBalls - rightCount;
+        rightCount = Math.floor(Math.random() * (numberOfballs - half) + half);
+        leftCount = numberOfballs - rightCount;
     }
 
     const leftArray = Array.from({ length: leftCount }, (_, i) => i + 1);
@@ -26,7 +26,7 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
     const state = await fetching('startonlinegame', 'POST', {
         left: leftArray,
         right: rightArray,
-        numberOfBalls,
+        numberOfballs,
         totalSeconds,
         id,
         player,
@@ -65,6 +65,19 @@ async function calculateWinner(leftBalls, rightBalls, id) {
     return null
 }
 
+function PlayAgain({ onClick }) {
+    return (
+        <div className="box">
+            <h1>Play Again</h1>
+            <button className="button main" onClick={onClick}>Yes</button>
+            <button className="button main" onClick={() => window.location.reload()}>No</button>
+        </div>
+    )
+}
+
+function makeNewGame({ oldId, player, opponent, history }) {
+    return null;
+}
 
 export default function GameOnline({ id, player, opponent }) {
     const isMobile = useMobileDetect();
@@ -77,6 +90,7 @@ export default function GameOnline({ id, player, opponent }) {
     const [history, setHistory] = useState([]);
     const [savedBalls, setSavedBalls] = useState([]);
     const [currentMove, setCurrentMove] = useState(0);
+    const [winner, setWinner] = useState(null);
     const [gameOver, setGameOver] = useState(false);
     const [gameStart, setGameStart] = useState(false);
     const [ruleViolation, setRuleViolation] = useState(false);
@@ -222,6 +236,20 @@ export default function GameOnline({ id, player, opponent }) {
         setCurrentMove(nextMove);
     }
 
+    useEffect(() => {
+        async function transferResults() {
+            try {
+                if (!gameOver) return;
+                const result = await fetching('fetchresults', 'POST', { id, player, opponent });
+                console.log("Result from fetchresults:", result);
+            }
+            catch (err) {
+                console.error("Error in fetchresults:", err);
+            }
+        }
+        transferResults();
+    }, [gameOver]);
+
     return (
         <div
             style={{ display: 'flex' }}
@@ -279,7 +307,7 @@ export default function GameOnline({ id, player, opponent }) {
                     </button>
                 </div>
             }
-            {history.length != 0 &&
+            {gameStart &&
                 <>
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
