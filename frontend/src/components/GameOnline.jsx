@@ -7,7 +7,7 @@ import { ref, onChildAdded, off, get } from "firebase/database";
 import "../styles/Game.css";
 import "../styles/page.css";
 
-const generateInitialState = (numberOfBalls, totalSeconds, id, player, opponent) => {
+const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opponent) => {
     const half = numberOfBalls / 2;
 
     let leftCount, rightCount;
@@ -23,7 +23,7 @@ const generateInitialState = (numberOfBalls, totalSeconds, id, player, opponent)
     const leftArray = Array.from({ length: leftCount }, (_, i) => i + 1);
     const rightArray = Array.from({ length: rightCount }, (_, i) => i + 1);
 
-    fetching('startonlinegame', 'POST', {
+    const state = await fetching('startonlinegame', 'POST', {
         left: leftArray,
         right: rightArray,
         numberOfBalls,
@@ -33,10 +33,7 @@ const generateInitialState = (numberOfBalls, totalSeconds, id, player, opponent)
         opponent
     });
 
-    return [{
-        left: leftArray,
-        right: rightArray
-    }];
+    return [state];
 };
 
 function WarningToggle() {
@@ -48,9 +45,21 @@ function WarningToggle() {
     )
 }
 
+function PlayAgain() {
+    return (
+        <div className="box">
+            <h2>Play Again</h2>
+            <button className="button">Yes</button>
+            <button className="button">No</button>
+        </div>
+    )
+}
+
 async function calculateWinner(leftBalls, rightBalls, id) {
     if (leftBalls === 0 && rightBalls === 0) {
-        const result = await fetching(`getgame?id=${id}`, 'GET');
+        const historySnap = await fetching(`getgame?id=${id}`, 'GET');
+        const history = historySnap.history;
+        const result = history[history.length - 1];
         return result.movedBy !== 'system' ? result.movedBy : null;
     }
     return null
@@ -95,7 +104,6 @@ export default function GameOnline({ id, player, opponent }) {
             const newMove = normalizeMove(rawmove);
 
             setHistory(prev => {
-                // Deduplicate by comparing content
                 const exists = prev.some(
                     m =>
                         JSON.stringify(m.move) === JSON.stringify(newMove.move) &&
@@ -107,9 +115,9 @@ export default function GameOnline({ id, player, opponent }) {
                 const updated = [...prev, newMove];
 
                 setPlayerIsNext(String(newMove.playerTurn) === String(player));
+                setCurrentMove(newMove.move);
                 if (String(newMove.movedBy) === String(player)) {
                     setSavedBalls([]);
-                    setCurrentMove(newMove.move);
                 }
 
                 return updated;
@@ -157,9 +165,7 @@ export default function GameOnline({ id, player, opponent }) {
             movedBy: player
         });
 
-        setCurrentMove(prev => prev + 1);
         setSavedBalls([]);
-        setPlayerIsNext(!playerIsNext);
 
         if (newLeftBalls.length === 0 && newRightBalls.length === 0) {
             setGameOver(true);
@@ -180,12 +186,13 @@ export default function GameOnline({ id, player, opponent }) {
         async function fetchWinner() {
             const win = await calculateWinner(leftBalls.length, rightBalls.length, id);
             setWinner(win);
+            if (winner) fetching('fetchresults', 'POST', { gameId: id, player, opponent });
+            setGameOver(true);
         }
         fetchWinner();
     }, [winner]);
 
     let status;
-    console.log("Player is next: ", playerIsNext);
     if (winner) {
         status = "Winner: " + (!playerIsNext ? "You" : opponent);
     }
@@ -222,6 +229,7 @@ export default function GameOnline({ id, player, opponent }) {
         >
             {ruleViolation && <WarningToggle />
             }
+            {gameOver && <PlayAgain />}
             {(history.length === 0 || gameSettings) &&
                 <div className="box" onClick={(e) => e.stopPropagation()}>
                     <p className="settings-text">Max Number of Balls in Game</p>
