@@ -1,6 +1,5 @@
-import redisClient from "./config/redis.js";
-import {database} from "./config/firebase.js";
-import {ref, set, get} from "firebase/database";
+import { database } from "./config/firebase.js";
+import { ref, set, get, push } from "firebase/database";
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -11,7 +10,6 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Only POST requests allowed" });
 
-    console.log(req.body);
     const { left, right, numberOfBalls, totalSeconds, id, player, opponent } = req.body;
 
     if (!left || !right || !numberOfBalls || !totalSeconds || !id || !player || !opponent) {
@@ -21,32 +19,37 @@ export default async function handler(req, res) {
     const determineTurn = Math.random() < 0.5;
     const playerTurn = determineTurn ? player : opponent;
 
-    const snapshot = {
+    const startshot = {
         left,
         right,
         numberOfBalls,
         totalSeconds,
         playerTurn,
-        movedBy: 'system'
+        movedBy: "system",
+        move: 0
     };
 
-    const startshot = {
+    const histshot = {
         left,
         right,
         playerTurn,
-        movedBy: 'system',
+        movedBy: "system",
         move: 0
     }
 
+    const gameRef = ref(database, `games/${id}`);
+    const gameSnap = await get(gameRef);
+    if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
+    await set(gameRef, { ...gameSnap.val(), state: "started" }); 
+
     const startRef = ref(database, `games/${id}/start`);
     const startSnap = await get(startRef);
-    if (startSnap.exists()) return res.status(404).json({message: "Game already set"});
-    await set(startRef, snapshot);
+    if (!startSnap.exists()) {
+        await set(startRef, startshot);
+    }
 
     const histRef = ref(database, `games/${id}/history`);
-    const histSnap = await get(histRef);
-    if (histSnap.exists()) return res.status(404).json({message: "Game is already set and is somewhere"});
-    await set(histRef, [startshot]);
+    await push(histRef, histshot);
 
-    return res.status(200).json({ message: "Game state appended to history" });
+    return res.status(200).json({ message: "Game state appended to history", histshot });
 }
