@@ -3,7 +3,7 @@ import Board from "./Board";
 import Player from "./Player.jsx";
 import { Counter, useMobileDetect, fetching } from "./utilities.jsx";
 import { database } from "../../firebase.js";
-import { ref, onChildAdded, off, get } from "firebase/database";
+import { ref, onChildAdded, off, onValue } from "firebase/database";
 import "../styles/Game.css";
 import "../styles/page.css";
 
@@ -13,11 +13,11 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
     let leftCount, rightCount;
     const isLeftLarger = Math.random() < 0.5;
     if (isLeftLarger) {
-        leftCount = Math.floor(Math.random() * (numberOfballs - half) + half);
-        rightCount = numberOfballs - leftCount;
+        leftCount = Math.floor(Math.random() * (numberOfBalls - half) + half);
+        rightCount = numberOfBalls - leftCount;
     } else {
-        rightCount = Math.floor(Math.random() * (numberOfballs - half) + half);
-        leftCount = numberOfballs - rightCount;
+        rightCount = Math.floor(Math.random() * (numberOfBalls - half) + half);
+        leftCount = numberOfBalls - rightCount;
     }
 
     const leftArray = Array.from({ length: leftCount }, (_, i) => i + 1);
@@ -26,15 +26,49 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
     const state = await fetching('startonlinegame', 'POST', {
         left: leftArray,
         right: rightArray,
-        numberOfballs,
+        numberOfBalls,
         totalSeconds,
         id,
         player,
         opponent
     });
 
-    return [state];
+    return state;
 };
+
+function useRematch(id, player, opponent) {
+    const [rematch, setRematch] = useState(null);
+
+    useEffect(() => {
+        if (!id) return;
+
+        const rematchRef = ref(database, `games/${id}/rematchState`);
+        const unsubscribe = onValue(rematchRef, (snapshot) => {
+            if (!snapshot.exists()) {
+                setRematch(null);
+                return;
+            }
+
+            const rematchState = snapshot.val();
+            const playerState = rematchState[player];
+            const opponentState = rematchState[opponent];
+
+            if (playerState === true && opponentState === true) {
+                setRematch(true);
+            }
+            else if (playerState === null || opponentState === null) {
+                setRematch(null);
+            }
+            else {
+                setRematch(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [id, player, opponent]);
+
+    return rematch;
+}
 
 function WarningToggle() {
     return (
@@ -45,17 +79,27 @@ function WarningToggle() {
     )
 }
 
-function PlayAgain() {
+function PlayAgain({ player, opponent, id }) {
+    const rematch = useRematch(id, player, opponent);
+    async function handleMatchClick(value) {
+        const results = await fetching('rematch', 'POST', { value, player, id });
+    }
     return (
         <div className="box">
             <h2>Play Again</h2>
-            <button className="button">Yes</button>
-            <button className="button">No</button>
+            <button className="button" onClick={() => handleMatchClick(true)}>Yes</button>
+            <button className="button" onClick={() => handleMatchClick(false)}>No</button>
+
+            {rematch === true && <p> Both players agreed! Starting new game...</p>}
+            {rematch === false && <p>One player declined</p>}
+            {rematch === null && <p>Waiting for players to decide...</p>}
         </div>
     )
 }
 
 async function calculateWinner(leftBalls, rightBalls, id) {
+    console.log("left balls: ", leftBalls);
+    console.log("right balls: ", rightBalls);
     if (leftBalls === 0 && rightBalls === 0) {
         const historySnap = await fetching(`getgame?id=${id}`, 'GET');
         const history = historySnap.history;
@@ -63,20 +107,6 @@ async function calculateWinner(leftBalls, rightBalls, id) {
         return result.movedBy !== 'system' ? result.movedBy : null;
     }
     return null
-}
-
-function PlayAgain({ onClick }) {
-    return (
-        <div className="box">
-            <h1>Play Again</h1>
-            <button className="button main" onClick={onClick}>Yes</button>
-            <button className="button main" onClick={() => window.location.reload()}>No</button>
-        </div>
-    )
-}
-
-function makeNewGame({ oldId, player, opponent, history }) {
-    return null;
 }
 
 export default function GameOnline({ id, player, opponent }) {
@@ -96,42 +126,47 @@ export default function GameOnline({ id, player, opponent }) {
     const [ruleViolation, setRuleViolation] = useState(false);
     const [gameSettings, setGameSettings] = useState(false);
     const [playerIsNext, setPlayerIsNext] = useState(true);
-    const [winner, setWinner] = useState(null);
 
     const leftBalls = history?.[currentMove]?.left ?? [];
     const rightBalls = history?.[currentMove]?.right ?? [];
     console.log("History: ", history);
+    console.log("Player turn: ", playerIsNext);
 
     useEffect(() => {
         if (!id) return;
 
         const historyRef = ref(database, `games/${id}/history`);
 
-        const normalizeMove = (move) => ({
-            ...move,
-            left: move.left || [],
-            right: move.right || []
-        });
-
         const unsubscribe = onChildAdded(historyRef, (snapshot) => {
-            const rawmove = snapshot.val();
-            const newMove = normalizeMove(rawmove);
+            const newMove = snapshot.val();
+            const key = snapshot.key;
 
             setHistory(prev => {
-                const exists = prev.some(
-                    m =>
-                        JSON.stringify(m.move) === JSON.stringify(newMove.move) &&
-                        m.playerTurn === newMove.playerTurn &&
-                        m.movedBy === newMove.movedBy
-                );
-                if (exists) return prev;
+                // Deduplicate by Firebase push key
+                if (prev.some(m => m._key === key)) return prev;
 
-                const updated = [...prev, newMove];
+                const updated = [...prev, { ...newMove, _key: key }];
 
+                // Update turn info
                 setPlayerIsNext(String(newMove.playerTurn) === String(player));
-                setCurrentMove(newMove.move);
+                setCurrentMove(updated.length - 1);
+
+                // Clear savedBalls if the current player made this move
                 if (String(newMove.movedBy) === String(player)) {
                     setSavedBalls([]);
+                }
+
+                // Check for winner
+                const left = newMove.left ?? [];
+                const right = newMove.right ?? [];
+                if (left.length === 0 && right.length === 0) {
+                    const winnerId = newMove.movedBy !== 'system' ? newMove.movedBy : null;
+                    setWinner(winnerId);
+                    setGameOver(true);
+
+                    if (winnerId) {
+                        fetching('fetchresults', 'POST', { gameId: id, player, opponent });
+                    }
                 }
 
                 return updated;
@@ -139,7 +174,9 @@ export default function GameOnline({ id, player, opponent }) {
         });
 
         return () => off(historyRef, "child_added", unsubscribe);
-    }, [id, player]);
+    }, [id, player, opponent]);
+
+
 
     function handleBallClick(side, ball) {
         if (!playerIsNext || gameOver) return;
@@ -148,19 +185,26 @@ export default function GameOnline({ id, player, opponent }) {
         setSavedBalls(prev =>
             prev.includes(key) ? prev.filter(b => b !== key) : [...prev, key]
         );
+        // setSavedBalls(prev => {
+        //     const exists = prev.some(x => x.side === side && x.ball === ball);
+        //     if (exists) return prev.filter(x => !(x.side === side && x.ball === ball));
+        //     return [...prev, { side, ball }];
+        // });
     }
 
     async function handleConfirm() {
-        if (savedBalls.length === 0 || gameSettings) return;
+        if (!playerIsNext || gameOver || savedBalls.length === 0) return;
 
         const lastState = history[currentMove];
         if (!lastState) return;
 
-        const newLeftBalls = lastState.left.filter(b => !savedBalls.includes(`left-${b}`));
-        const newRightBalls = lastState.right.filter(b => !savedBalls.includes(`right-${b}`));
+        const newLeftBalls = lastState.left ? lastState.left.filter(b => !savedBalls.includes(`left-${b}`)) : [];
+        const newRightBalls = lastState.right ? lastState.right.filter(b => !savedBalls.includes(`right-${b}`)) : [];
 
-        const leftDiff = lastState.left.length - newLeftBalls.length;
-        const rightDiff = lastState.right.length - newRightBalls.length;
+        const prevLeftLength = lastState.left ? lastState.left.length : 0;
+        const prevRightLength = lastState.right ? lastState.right.length : 0;
+        const leftDiff = prevLeftLength - newLeftBalls.length;
+        const rightDiff = prevRightLength - newRightBalls.length;
 
         if ((leftDiff !== rightDiff) && (leftDiff > 0) && (rightDiff > 0)) {
             setRuleViolation(true);
@@ -180,31 +224,19 @@ export default function GameOnline({ id, player, opponent }) {
         });
 
         setSavedBalls([]);
-
-        if (newLeftBalls.length === 0 && newRightBalls.length === 0) {
-            setGameOver(true);
-        }
     }
 
 
-    function handleRestart() {
-        const init = generateInitialState(numberOfballs, maxSeconds, id, player, opponent);
-        setHistory(init);
+
+    async function handleRestart() {
+        const totalSeconds = minutes * 60 + seconds;
+
+        await generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
         setSavedBalls([]);
         setCurrentMove(0);
         setGameOver(false);
         setGameStart(false);
     }
-
-    useEffect(() => {
-        async function fetchWinner() {
-            const win = await calculateWinner(leftBalls.length, rightBalls.length, id);
-            setWinner(win);
-            if (winner) fetching('fetchresults', 'POST', { gameId: id, player, opponent });
-            setGameOver(true);
-        }
-        fetchWinner();
-    }, [winner]);
 
     let status;
     if (winner) {
@@ -236,20 +268,6 @@ export default function GameOnline({ id, player, opponent }) {
         setCurrentMove(nextMove);
     }
 
-    useEffect(() => {
-        async function transferResults() {
-            try {
-                if (!gameOver) return;
-                const result = await fetching('fetchresults', 'POST', { id, player, opponent });
-                console.log("Result from fetchresults:", result);
-            }
-            catch (err) {
-                console.error("Error in fetchresults:", err);
-            }
-        }
-        transferResults();
-    }, [gameOver]);
-
     return (
         <div
             style={{ display: 'flex' }}
@@ -257,7 +275,7 @@ export default function GameOnline({ id, player, opponent }) {
         >
             {ruleViolation && <WarningToggle />
             }
-            {gameOver && <PlayAgain />}
+            {gameOver && <PlayAgain player={player} opponent={opponent} id={id} />}
             {(history.length === 0 || gameSettings) &&
                 <div className="box" onClick={(e) => e.stopPropagation()}>
                     <p className="settings-text">Max Number of Balls in Game</p>
@@ -298,8 +316,8 @@ export default function GameOnline({ id, player, opponent }) {
                     <br />
                     <button className="button" onClick={() => {
                         const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
-                        const init = generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
-                        setHistory(init);
+                        generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
+                        // setHistory(init);
                         setCurrentMove(0);
                         setGameSettings(false);
                     }}>
@@ -307,7 +325,7 @@ export default function GameOnline({ id, player, opponent }) {
                     </button>
                 </div>
             }
-            {gameStart &&
+            {history.length !== 0 &&
                 <>
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
