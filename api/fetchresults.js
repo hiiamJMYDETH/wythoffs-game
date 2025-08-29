@@ -1,5 +1,5 @@
 import { database } from "./config/firebase.js";
-import { ref, get, set } from "firebase/database";
+import { ref, get, set, update } from "firebase/database";
 import { connectToDatabase } from "./config/db.js";
 
 async function fetchGameResults(client, game) {
@@ -32,6 +32,12 @@ export default async function handler(req, res) {
     if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
 
     await set(gameRef, { ...gameSnap.val(), state: "completed" });
+    const rematchRef = ref(database, `games/${gameId}/rematchState`);
+    const rematchSnap = await get(rematchRef);
+
+    if (!rematchSnap.exists() || typeof rematchSnap.val() !== "object") {
+        await set(rematchRef, { [player]: '', [opponent]: '' });
+    }
     const game = gameSnap.val();
 
     await fetchGameResults(client, game);

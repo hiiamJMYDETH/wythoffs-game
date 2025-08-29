@@ -2,7 +2,7 @@ import {useRef, useEffect} from "react";
 import "../styles/Game.css";
 import MarbleImage from "../assets/Marble.svg";
 
-function Ball({ value, onBallClick, isSelected }) {
+export default function Ball({ value, onBallClick, isSelected }) {
   const ballRef = useRef(null);
 
   useEffect(() => {
@@ -31,12 +31,3 @@ function Ball({ value, onBallClick, isSelected }) {
     />
   );
 }
-
-function GenerateBalls({ balls, onBallClick, savedBalls }) {
-    const isSelected = savedBalls ? (ball) => savedBalls.includes(ball) : () => false;
-    return balls.map((ball, i) => (
-      <Ball key={i} value={ball} onBallClick={onBallClick} isSelected={isSelected(ball)} />
-    ));
-  }
-
-export {GenerateBalls, Ball};

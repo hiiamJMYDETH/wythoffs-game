@@ -53,10 +53,10 @@ function useRematch(id, player, opponent) {
             const playerState = rematchState[player];
             const opponentState = rematchState[opponent];
 
-            if (playerState === true && opponentState === true) {
+            if (playerState === '1' && opponentState === '1') {
                 setRematch(true);
             }
-            else if (playerState === null || opponentState === null) {
+            else if (playerState === '' || opponentState === '') {
                 setRematch(null);
             }
             else {
@@ -79,37 +79,7 @@ function WarningToggle() {
     )
 }
 
-function PlayAgain({ player, opponent, id }) {
-    const rematch = useRematch(id, player, opponent);
-    async function handleMatchClick(value) {
-        const results = await fetching('rematch', 'POST', { value, player, id });
-    }
-    return (
-        <div className="box">
-            <h2>Play Again</h2>
-            <button className="button" onClick={() => handleMatchClick(true)}>Yes</button>
-            <button className="button" onClick={() => handleMatchClick(false)}>No</button>
-
-            {rematch === true && <p> Both players agreed! Starting new game...</p>}
-            {rematch === false && <p>One player declined</p>}
-            {rematch === null && <p>Waiting for players to decide...</p>}
-        </div>
-    )
-}
-
-async function calculateWinner(leftBalls, rightBalls, id) {
-    console.log("left balls: ", leftBalls);
-    console.log("right balls: ", rightBalls);
-    if (leftBalls === 0 && rightBalls === 0) {
-        const historySnap = await fetching(`getgame?id=${id}`, 'GET');
-        const history = historySnap.history;
-        const result = history[history.length - 1];
-        return result.movedBy !== 'system' ? result.movedBy : null;
-    }
-    return null
-}
-
-export default function GameOnline({ id, player, opponent }) {
+export default function GameOnline({ id, player, opponent, handleResult }) {
     const isMobile = useMobileDetect();
     const gameInfo = useRef();
 
@@ -142,21 +112,17 @@ export default function GameOnline({ id, player, opponent }) {
             const key = snapshot.key;
 
             setHistory(prev => {
-                // Deduplicate by Firebase push key
                 if (prev.some(m => m._key === key)) return prev;
 
                 const updated = [...prev, { ...newMove, _key: key }];
 
-                // Update turn info
                 setPlayerIsNext(String(newMove.playerTurn) === String(player));
                 setCurrentMove(updated.length - 1);
 
-                // Clear savedBalls if the current player made this move
                 if (String(newMove.movedBy) === String(player)) {
                     setSavedBalls([]);
                 }
 
-                // Check for winner
                 const left = newMove.left ?? [];
                 const right = newMove.right ?? [];
                 if (left.length === 0 && right.length === 0) {
@@ -177,7 +143,6 @@ export default function GameOnline({ id, player, opponent }) {
     }, [id, player, opponent]);
 
 
-
     function handleBallClick(side, ball) {
         if (!playerIsNext || gameOver) return;
         if (!gameStart) setGameStart(true);
@@ -185,11 +150,6 @@ export default function GameOnline({ id, player, opponent }) {
         setSavedBalls(prev =>
             prev.includes(key) ? prev.filter(b => b !== key) : [...prev, key]
         );
-        // setSavedBalls(prev => {
-        //     const exists = prev.some(x => x.side === side && x.ball === ball);
-        //     if (exists) return prev.filter(x => !(x.side === side && x.ball === ball));
-        //     return [...prev, { side, ball }];
-        // });
     }
 
     async function handleConfirm() {
@@ -226,7 +186,11 @@ export default function GameOnline({ id, player, opponent }) {
         setSavedBalls([]);
     }
 
-
+    useEffect(() => {
+        if (gameOver) {
+            handleResult(true);
+        }
+    }, [gameOver, handleResult]);
 
     async function handleRestart() {
         const totalSeconds = minutes * 60 + seconds;
@@ -275,7 +239,6 @@ export default function GameOnline({ id, player, opponent }) {
         >
             {ruleViolation && <WarningToggle />
             }
-            {gameOver && <PlayAgain player={player} opponent={opponent} id={id} />}
             {(history.length === 0 || gameSettings) &&
                 <div className="box" onClick={(e) => e.stopPropagation()}>
                     <p className="settings-text">Max Number of Balls in Game</p>
@@ -317,7 +280,6 @@ export default function GameOnline({ id, player, opponent }) {
                     <button className="button" onClick={() => {
                         const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
                         generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
-                        // setHistory(init);
                         setCurrentMove(0);
                         setGameSettings(false);
                     }}>
