@@ -31,5 +31,8 @@
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
     "vercel": "^41.3.0"
+  },
+  "devDependencies": {
+    "rollup": "^4.49.0"
   }
 }
