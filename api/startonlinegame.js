@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const startshot = {
         left,
         right,
-        numberOfballs,
+        numberOfBalls,
         totalSeconds,
         playerTurn,
         movedBy: "system",
