@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "npm run dev --prefix frontend",
-    "build": "npm run build --prefix frontend",
+    "build": "yarn --cwd frontend install --frozen-lockfile && yarn --cwd frontend build",
     "start": "serve -s frontend/dist -l $PORT",
     "vercel-dev": "vercel dev"
   },
@@ -18,7 +18,6 @@
     "url": "https://github.com/hiiamJMYDETH/wythoffs-game/issues"
   },
   "homepage": "https://github.com/hiiamJMYDETH/wythoffs-game#readme",
-  "description": "",
   "dependencies": {
     "@dataconnect/generated": "link:dataconnect-generated/js/example-connector",
     "bcrypt": "^5.1.1",
