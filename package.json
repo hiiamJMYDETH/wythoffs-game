@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
-    "start": "npm run start --prefix frontend",
+    "start": "serve -s frontend/dist -l $PORT",
     "vercel-dev": "vercel dev"
   },
   "repository": {
@@ -35,6 +35,7 @@
     "vercel": "^41.3.0"
   },
   "devDependencies": {
-    "rollup": "^4.49.0"
+    "rollup": "^4.49.0",
+    "serve": "^14.2.0"
   }
 }
