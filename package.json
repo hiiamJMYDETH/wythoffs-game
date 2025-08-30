@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "npm run dev --prefix frontend",
     "build": "yarn --cwd frontend install --frozen-lockfile && yarn --cwd frontend build",
-    "start": "serve -s frontend/dist -l $PORT",
+    "start": "npx --prefix frontend serve -s dist -l $PORT",
     "vercel-dev": "vercel dev"
   },
   "repository": {
