@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
   return ({
     plugins: [react()],
+    base: './',
     build: {
       outDir: 'dist' // default, but let's make sure
     },
