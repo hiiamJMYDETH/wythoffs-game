@@ -108,6 +108,7 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
 
   const options = {
     method: reqMethod,
+    credentials: "include",
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Session ${localStorage.getItem('sessionId') || ''}`

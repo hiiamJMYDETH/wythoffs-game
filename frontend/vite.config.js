@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => {
     },
     preview: {
       allowedHosts: ['wythoffs-game.onrender.com'],
-      port: process.env.PORT || 4173,
-      host: true
+      port: parseInt(process.env.PORT) || 4173,
+      host: "0.0.0.0"
     },
     server: {
       proxy: {
