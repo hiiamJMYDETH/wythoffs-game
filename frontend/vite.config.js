@@ -16,7 +16,14 @@ export default defineConfig(({ mode }) => {
       host: true
     },
     server: {
-      host: true
+      proxy: {
+        "/api": {
+          target: process.env.VITE_API_URL,
+          changeOrigin: true,
+          secure: true,
+          host: true
+        }
+      }
     },
     define: {
       'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),

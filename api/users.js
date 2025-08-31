@@ -1,11 +1,20 @@
 import { connectToDatabase } from "./config/db.js";
-import authenticateToken from "./config/auth.js";
+import { configDotenv } from "dotenv";
 import redisClient from "./config/redis.js";
 
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');  
-    res.setHeader('Access-Control-Allow-Methods', 'GET'); 
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');  
+    const allowedOrigins = [
+        "http://localhost:5173",                
+        process.env.VITE_API_URL
+    ];
+
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
@@ -23,11 +32,10 @@ export default async function handler(req, res) {
         }
         catch (error) {
             console.log("Error message: ", error);
-            res.status(500).json({Error: error.message});
+            res.status(500).json({ Error: error.message });
         }
     }
     else {
-        res.status(500).json({message: "Method not allowed"});
+        res.status(500).json({ message: "Method not allowed" });
     }
-  }
-  
+}

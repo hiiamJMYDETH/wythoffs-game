@@ -1,6 +1,7 @@
 // pages/api/loaduser.js
 import { ref, child, get } from "firebase/database";
 import { database } from "./config/firebase.js"; // import the shared Firebase instance
+import { configDotenv } from "dotenv";
 import checkSession from "./config/checksession.js";
 
 // Timeout helper
@@ -14,7 +15,15 @@ function timeout(ms, promise) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.VITE_API_URL
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
