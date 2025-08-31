@@ -17,7 +17,7 @@ function timeout(ms, promise) {
 export default async function handler(req, res) {
   const allowedOrigins = [
     "http://localhost:5173",
-    process.env.VITE_API_URL
+    "https://wythoffs-game.onrender.com"
   ];
 
   const origin = req.headers.origin;
