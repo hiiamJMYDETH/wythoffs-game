@@ -104,7 +104,10 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted }) {
 }
 
 async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
-  const apiUrl = import.meta.env.VITE_API_URL || `http://localhost:3000/api`;
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
 
   const options = {
     method: reqMethod,

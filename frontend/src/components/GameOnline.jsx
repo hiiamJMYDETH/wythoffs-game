@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import Player from "./Player.jsx";
 import { Counter, useMobileDetect, fetching } from "./utilities.jsx";
-import { database } from "../../firebase.js";
+import { database } from "../config/firebase.js";
 import { ref, onChildAdded, off, onValue } from "firebase/database";
 import "../styles/Game.css";
 import "../styles/page.css";

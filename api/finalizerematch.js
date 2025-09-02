@@ -1,6 +1,6 @@
-import { database } from "./config/firebase.js";
+import { database } from "../config/firebase.js";
 import { ref, get, set, remove } from "firebase/database";
-import redisClient from "./config/redis.js"
+import redisClient from "../config/redis.js"
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");

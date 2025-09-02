@@ -1,6 +1,6 @@
-import redisClient from "./config/redis.js";
-import checkSession from "./config/checksession.js";
-import { database } from "./config/firebase.js";
+import redisClient from "../config/redis.js";
+import checkSession from "../config/checksession.js";
+import { database } from "../config/firebase.js";
 import { ref, set, get } from "firebase/database";
 
 async function findOrCreateGame(playerId) {

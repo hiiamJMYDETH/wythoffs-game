@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist' // default, but let's make sure
     },
     preview: {
-      allowedHosts: ['wythoffs-game.onrender.com'],
+      allowedHosts: [process.env.VITE_API_URL],
       port: parseInt(process.env.PORT) || 4173,
       host: "0.0.0.0"
     },

@@ -1,6 +1,6 @@
-import { database } from "./config/firebase.js";
+import { database } from "../config/firebase.js";
 import { ref, get, set, update } from "firebase/database";
-import { connectToDatabase } from "./config/db.js";
+import { connectToDatabase } from "../config/db.js";
 
 async function fetchGameResults(client, game) {
     const { createdAt, gameId, history, players } = game;

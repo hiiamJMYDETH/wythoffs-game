@@ -1,17 +1,8 @@
-import { connectToDatabase } from "./config/db.js";
+import { connectToDatabase } from "../config/db.js";
 import { configDotenv } from "dotenv";
-import redisClient from "./config/redis.js";
+import { connectRedis } from "../config/redis.js";
 
 export default async function handler(req, res) {
-    const allowedOrigins = [
-        "http://localhost:5173",                
-        process.env.VITE_API_URL
-    ];
-
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-    }
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -24,6 +15,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
+            const redisClient = await connectRedis();
             const client = await connectToDatabase();
             const temp_user = await redisClient.hGetAll("user:1001");
             console.log("temp user from redis: ", temp_user);
