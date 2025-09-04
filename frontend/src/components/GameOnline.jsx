@@ -36,40 +36,6 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
     return state;
 };
 
-function useRematch(id, player, opponent) {
-    const [rematch, setRematch] = useState(null);
-
-    useEffect(() => {
-        if (!id) return;
-
-        const rematchRef = ref(database, `games/${id}/rematchState`);
-        const unsubscribe = onValue(rematchRef, (snapshot) => {
-            if (!snapshot.exists()) {
-                setRematch(null);
-                return;
-            }
-
-            const rematchState = snapshot.val();
-            const playerState = rematchState[player];
-            const opponentState = rematchState[opponent];
-
-            if (playerState === '1' && opponentState === '1') {
-                setRematch(true);
-            }
-            else if (playerState === '' || opponentState === '') {
-                setRematch(null);
-            }
-            else {
-                setRematch(false);
-            }
-        });
-
-        return () => unsubscribe();
-    }, [id, player, opponent]);
-
-    return rematch;
-}
-
 function WarningToggle() {
     return (
         <div className="box rule-viol">
@@ -298,7 +264,7 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     </div>
                     <div className="status" ref={gameInfo}>
                         <div style={{ display: 'flex' }}>
-                            {/* <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} /> */}
+                            <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} gameId={id}/>
                             <p style={{ fontWeight: 'bold' }}>{status}</p>
                         </div>
                         <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>

@@ -37,6 +37,8 @@ export default async function handler(req, res) {
         move: 0
     }
 
+    const timeShot = Date.now();
+
     const gameRef = ref(database, `games/${id}`);
     const gameSnap = await get(gameRef);
     if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
@@ -50,6 +52,9 @@ export default async function handler(req, res) {
 
     const histRef = ref(database, `games/${id}/history`);
     await push(histRef, histshot);
+
+    const timeRef = ref(database, `games/${id}/startTime`);
+    await set(timeRef, timeShot);
 
     return res.status(200).json({ message: "Game state appended to history", histshot });
 }

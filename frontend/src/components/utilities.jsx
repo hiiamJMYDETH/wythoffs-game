@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { database } from "../config/firebase.js";
+import { ref, set, onValue } from "firebase/database";
 
 function useMobileDetect() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -52,53 +54,82 @@ function handleClick(id, navigate) {
   }
 }
 
-function Counter({ isGameOver, setter, maxSeconds, hasStarted }) {
-  if (isGameOver) {
-    return (
-      <div className="status timer" style={{ display: 'none' }}>
-        <p style={{ margin: '0px' }}> Results: </p>
-      </div>
-    )
-  }
+function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
+  const [startTime, setStartTime] = useState(null);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (isGameOver || !hasStarted) {
+    if (hasStarted && !isGameOver) {
+      const timeRef = ref(database, `games/${gameId}/startTime`);
+      set(timeRef, Date.now());
+    }
+  }, [hasStarted, isGameOver, gameId]);
+
+  useEffect(() => {
+    const timeRef = ref(database, `games/${gameId}/startTime`);
+    return onValue(timeRef, (snapshot) => {
+      const value = snapshot.val();
+      if (value) setStartTime(value);
+    });
+  }, [gameId]);
+
+  useEffect(() => {
+    if (!startTime || isGameOver) {
       setCount(0);
       return;
     }
+
     const intervalId = setInterval(() => {
-      setCount(prev => prev + 1);
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      setCount(elapsed);
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [isGameOver, hasStarted]);
+  }, [startTime, isGameOver]);
 
   useEffect(() => {
     if (count >= maxSeconds) {
       setter(true);
     }
-  }, [count, setter]);
+  }, [count, setter, maxSeconds]);
 
   let min = Math.floor(count / 60);
-  let tempSeconds = count - (min * 60);
-  let seconds = tempSeconds > 9 ? tempSeconds : '0' + tempSeconds;
+  let tempSeconds = count - min * 60;
+  let seconds = tempSeconds > 9 ? tempSeconds : "0" + tempSeconds;
 
   if (isGameOver) {
     return (
-      <div className="timer" style={{ fontSize: '35px', justifySelf: 'center' }}>
-        <p> Out of time </p>
+      <div className="timer"
+        style={{
+          justifySelf: "center",
+          fontWeight: "bold",
+          marginRight: "10px",
+        }}
+      >
+        <p>Out of time</p>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="timer" style={{
-      justifySelf: 'center',
-      fontWeight: 'bold',
-      marginRight: '10px'
-    }}>
-      <p> {min + ":" + seconds} </p>
+    <div
+      className="timer"
+      style={{
+        justifySelf: "center",
+        fontWeight: "bold",
+        marginRight: "10px",
+      }}
+    >
+      <p>{min + ":" + seconds}</p>
+    </div>
+  );
+}
+
+function WarningToggle() {
+  return (
+    <div className="box rule-viol">
+      <h2>You must pick either any amount from one side of the board or
+        equal amounts from both sides of the board.</h2>
     </div>
   )
 }
@@ -159,4 +190,4 @@ function LoadingDiv() {
 
 
 
-export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv };
+export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle };

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import CPUPlay from './CPU';
 import Player from "./Player.jsx";
-import { Counter, useMobileDetect } from "./utilities.jsx";
+import { WarningToggle, Counter, useMobileDetect } from "./utilities.jsx";
 import "../styles/Game.css";
 import "../styles/page.css";
 
@@ -26,15 +26,6 @@ const generateInitialState = (numberOfBalls) => {
     },
   ];
 };
-
-function WarningToggle() {
-  return (
-    <div className="box rule-viol">
-      <h2>You must pick either any amount from one side of the board or
-        equal amounts from both sides of the board.</h2>
-    </div>
-  )
-}
 
 function calculateWinner(leftBalls, rightBalls, isUser, isCPUPlaying) {
   let opponent = "Other player";
@@ -68,7 +59,11 @@ function Game({ isCPUPlaying }) {
   const leftBalls = history[currentMove].left;
   const rightBalls = history[currentMove].right;
 
+  console.log("Game start: ", gameStart);
+
   function handleBallClick(side, ball) {
+    if (!userIsNext || gameOver) return;
+    if (!gameStart) setGameStart(true);
     const key = `${side}-${ball}`;
     setSavedBalls(prev =>
       prev.includes(key) ? prev.filter(b => b !== key) : [...prev, key]
@@ -333,7 +328,7 @@ function Game({ isCPUPlaying }) {
           </div >
           <div className="status" ref={gameInfo}>
             <div style={{ display: 'flex' }}>
-              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} />
+              <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} gameId={null} />
               <p style={{ fontWeight: 'bold' }}>{status}</p>
             </div>
             <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>

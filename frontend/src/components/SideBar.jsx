@@ -6,7 +6,6 @@ import PlayImage from "../assets/Play.svg";
 import UserDefault from "../assets/User default.svg";
 import SettingsIcon from "../assets/Settings.svg";
 import HelpIcon from "../assets/Help.svg";
-// import { set } from "firebase/database";
 
 
 function SideBar() {
