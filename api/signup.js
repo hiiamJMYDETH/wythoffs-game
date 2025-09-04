@@ -1,4 +1,4 @@
-import { connectToDatabase } from "./config/db.js";
+import { connectToDatabase } from "../config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import crypto from "crypto"; // Import the crypto module for generating UUIDs

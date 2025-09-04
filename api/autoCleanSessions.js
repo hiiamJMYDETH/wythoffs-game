@@ -1,4 +1,4 @@
-import cleanupsessions from "./config/cleanupsessions.js";
+import cleanupsessions from "../config/cleanupsessions.js";
 
 export default async function handler(req, res) {
     try {

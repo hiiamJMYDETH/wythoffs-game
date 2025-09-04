@@ -1,6 +1,7 @@
-import redisClient from "./config/redis.js";
-import checkSession from "./config/checksession.js";
-import { database } from "./config/firebase.js";
+// import redisClient from "../config/redis.js";
+import { connectRedis } from "../config/redis.js";
+import checkSession from "../config/checksession.js";
+import { database } from "../config/firebase.js";
 import { ref, set, get } from "firebase/database";
 
 async function findOrCreateGame(playerId) {
@@ -18,6 +19,7 @@ async function findOrCreateGame(playerId) {
     end
   `;
 
+  const redisClient = await connectRedis();
   const result = await redisClient.eval(luaScript, {
     keys: [],
     arguments: [String(playerId)],
@@ -43,6 +45,7 @@ async function findOrCreateGame(playerId) {
 }
 
 async function loadGame(playerId) {
+  const redisClient = await connectRedis();
   const gameId = await redisClient.hGet(`player:${playerId}`, "gameId");
   if (gameId) {
     const gameRef = ref(database, `games/${gameId}`);

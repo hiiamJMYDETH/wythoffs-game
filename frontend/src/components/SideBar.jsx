@@ -6,7 +6,7 @@ import PlayImage from "../assets/Play.svg";
 import UserDefault from "../assets/User default.svg";
 import SettingsIcon from "../assets/Settings.svg";
 import HelpIcon from "../assets/Help.svg";
-import { set } from "firebase/database";
+// import { set } from "firebase/database";
 
 
 function SideBar() {
@@ -24,19 +24,19 @@ function SideBar() {
     useEffect(() => {
         async function loadUsers() {
             try {
-              const users = await fetching('loaduser');
-              console.log('Users:', users);
-              localStorage.setItem('user', JSON.stringify(users));
-              setUser(users);
+                const users = await fetching('loaduser');
+                console.log('Users:', users);
+                localStorage.setItem('user', JSON.stringify(users));
+                setUser(users);
 
             } catch (error) {
-              console.error('Error loading users:', error.message);
+                console.error('Error loading users:', error.message);
                 localStorage.removeItem('sessionId');
                 localStorage.removeItem('user');
                 setUser(null);
             }
-          }
-          loadUsers();
+        }
+        loadUsers();
     }, [token]);
 
     useEffect(() => {
