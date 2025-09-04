@@ -1,6 +1,7 @@
 import { connectToDatabase } from "../config/db.js";
 import { configDotenv } from "dotenv";
 import { connectRedis } from "../config/redis.js";
+// import redisClient from "../config/redis.js";
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');

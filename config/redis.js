@@ -6,18 +6,13 @@ dotenv.config();
 const redisClient = createClient({
     url: process.env.UPSTASH_REDIS_URL,
     socket: {
-        tls: true, // required for most hosted Redis
+        tls: true, 
     },
 });
 
-// redisClient.on('error', (err) => console.error('❌ Redis Error:', err));
-
-// await redisClient.connect(); 
-
-// export default redisClient;
 export async function connectRedis() {
-    if (!redisClient.isOpen) {
-        await redisClient.connect();
-    }
-    return redisClient;
+  if (!redisClient.isOpen) {
+    await redisClient.connect();
+  }
+  return redisClient;
 }
