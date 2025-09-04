@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import Player from "./Player.jsx";
-import { Counter, useMobileDetect, fetching } from "./utilities.jsx";
+import { Counter, useMobileDetect, fetching, WarningToggle } from "./utilities.jsx";
 import { database } from "../config/firebase.js";
-import { ref, onChildAdded, off, onValue } from "firebase/database";
+import { ref, onChildAdded, off, get, push, set } from "firebase/database";
 import "../styles/Game.css";
 import "../styles/page.css";
 
@@ -20,29 +20,86 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
         leftCount = numberOfBalls - rightCount;
     }
 
-    const leftArray = Array.from({ length: leftCount }, (_, i) => i + 1);
-    const rightArray = Array.from({ length: rightCount }, (_, i) => i + 1);
+    const left = Array.from({ length: leftCount }, (_, i) => i + 1);
+    const right = Array.from({ length: rightCount }, (_, i) => i + 1);
 
-    const state = await fetching('startonlinegame', 'POST', {
-        left: leftArray,
-        right: rightArray,
+    const determineTurn = Math.random() < 0.5;
+    const playerTurn = determineTurn ? player : opponent;
+
+    const startshot = {
+        left,
+        right,
         numberOfBalls,
         totalSeconds,
-        id,
-        player,
-        opponent
-    });
+        playerTurn,
+        movedBy: "system",
+        move: 0
+    };
 
-    return state;
+    const histshot = {
+        left,
+        right,
+        playerTurn,
+        movedBy: "system",
+        move: 0
+    }
+
+    const timeShot = Date.now();
+
+    const gameRef = ref(database, `games/${id}`);
+    const gameSnap = await get(gameRef);
+    if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
+    await set(gameRef, { ...gameSnap.val(), state: "started" });
+
+    const startRef = ref(database, `games/${id}/start`);
+    const startSnap = await get(startRef);
+    if (!startSnap.exists()) {
+        await set(startRef, startshot);
+    }
+
+    const histRef = ref(database, `games/${id}/history`);
+    await push(histRef, histshot);
+
+    const timeRef = ref(database, `games/${id}/startTime`);
+    await set(timeRef, timeShot);
+
+    return histshot;
 };
 
-function WarningToggle() {
-    return (
-        <div className="box rule-viol">
-            <h2>You must pick either any amount from one side of the board or
-                equal amounts from both sides of the board.</h2>
-        </div>
-    )
+async function confirmMove(request) {
+    const { id, left = [], right = [], move, playerTurn, movedBy } = request;
+    const histRef = ref(database, `games/${id}/history`);
+    const histSnap = await get(histRef);
+    if (!histSnap.exists()) {
+        return false;
+    }
+
+    const userSnap = await get(ref(database, `games/${id}/players`));
+    if (!userSnap.exists()) {
+        return false;
+    }
+    const hist = histSnap.val();
+    const history = hist ? Object.values(hist) : [];
+    const lastState = history[history.length - 1];
+
+
+    const lastLeft = lastState?.left || [];
+    const lastRight = lastState?.right || [];
+
+    if (left.length === lastLeft.length && right.length === lastRight.length) {
+        return false;
+    }
+
+    const requestedMove = {
+        left: Array.isArray(left) ? left : [],
+        right: Array.isArray(right) ? right : [],
+        move,
+        movedBy,
+        playerTurn
+    };
+
+    await push(histRef, requestedMove);
+    return true;
 }
 
 export default function GameOnline({ id, player, opponent, handleResult }) {
@@ -67,6 +124,7 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
     const rightBalls = history?.[currentMove]?.right ?? [];
     console.log("History: ", history);
     console.log("Player turn: ", playerIsNext);
+    console.log("Is it game over: ", gameOver);
 
     useEffect(() => {
         if (!id) return;
@@ -140,15 +198,22 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
 
         const nextTurn = playerIsNext ? opponent : player;
 
-        await fetching("makeamove", "POST", {
+        const request = {
             id,
             left: newLeftBalls,
             right: newRightBalls,
             move: currentMove + 1,
             playerTurn: nextTurn,
             movedBy: player
-        });
+        };
 
+        const result = await confirmMove(request);
+
+        if (!result) {
+            setRuleViolation(true);
+            setTimeout(() => setRuleViolation(false), 2000);
+            return;
+        }
         setSavedBalls([]);
     }
 
@@ -258,13 +323,13 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
                         <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
-                            <Player name={"You"} />
+                            <Player name={player} />
                             <Player name={opponent} />
                         </div >
                     </div>
                     <div className="status" ref={gameInfo}>
                         <div style={{ display: 'flex' }}>
-                            <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} gameId={id}/>
+                            <Counter isGameOver={gameOver} setter={setGameOver} maxSeconds={maxSeconds} hasStarted={gameStart} gameId={id} />
                             <p style={{ fontWeight: 'bold' }}>{status}</p>
                         </div>
                         <div style={{ width: '200px', height: '360px', overflowY: 'auto' }}>

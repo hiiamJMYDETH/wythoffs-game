@@ -138,6 +138,8 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
   const apiUrl =
     import.meta.env.VITE_API_URL ||
     (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+  
+    console.log("api url: ", apiUrl);
 
 
   const options = {
