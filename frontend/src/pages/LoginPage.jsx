@@ -1,4 +1,3 @@
-import Background from "../components/Background";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetching } from "../components/utilities";
@@ -30,7 +29,6 @@ function LoginPage() {
     }
     return (
         <div className="page">
-            {/* <Background /> */}
             <div className="center">
                 <h1>Wythoff's Game</h1>
                 <div className="box" style={{ justifyItems: 'center', display: 'grid', position: 'relative', zIndex: '0' }}>

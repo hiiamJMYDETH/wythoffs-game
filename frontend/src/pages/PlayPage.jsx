@@ -4,7 +4,6 @@ import { handleClick, useMobileDetect } from "../components/utilities.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Board from "../components/Board.jsx";
 import SideBar from "../components/SideBar.jsx";
-import Background from "../components/Background.jsx";
 import PlayImage from "../assets/Play.svg";
 
 function PlayPage() {
@@ -13,7 +12,6 @@ function PlayPage() {
 
     return (
         <div className="page">
-            {/* <Background /> */}
             {isMobile ? (
                 <>
                     <MobileSideBar />

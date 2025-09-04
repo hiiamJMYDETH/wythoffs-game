@@ -1,4 +1,3 @@
-import Background from "../components/Background";
 import MobileSideBar from "../components/MobileSideBar";
 import SideBar from "../components/SideBar";
 import { useMobileDetect } from "../components/utilities";
@@ -8,7 +7,6 @@ function HelpPage() {
     const isMobile = useMobileDetect();
     return (
         <div className="page">
-            {/* <Background /> */}
             {isMobile ? (
                 <MobileSideBar />
             ) : (

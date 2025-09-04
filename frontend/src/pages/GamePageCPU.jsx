@@ -3,7 +3,6 @@ import { useMobileDetect } from "../components/utilities.jsx";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import Game from "../components/Game.jsx";
 import SideBar from "../components/SideBar.jsx";
-import Background from "../components/Background.jsx";
 
 function GamePageCPU() {
     const isMobile = useMobileDetect();
@@ -12,7 +11,6 @@ function GamePageCPU() {
 
     return (
         <div className="page">
-            {/* <Background /> */}
             {isMobile ? (<MobileSideBar />) : (<SideBar />)}
             <div className="center">
                 <Game isCPUPlaying={CPUPlay} />

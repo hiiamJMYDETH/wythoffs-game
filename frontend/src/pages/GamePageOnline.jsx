@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useMobileDetect, fetching } from "../components/utilities.jsx";
 import { useNavigate } from "react-router-dom";
 import { database } from "../config/firebase.js";
-import { ref, remove, onValue } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import GameOnline from "../components/GameOnline.jsx";
 import SideBar from "../components/SideBar.jsx";
