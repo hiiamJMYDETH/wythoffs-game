@@ -16,7 +16,7 @@ function SettingsPage() {
         const stored = localStorage.getItem('user');
         return stored ? JSON.parse(stored) : null;
     });
-    const userId = user.userId || null;
+    const userId = user?.userId || null;
     const [win, setWin] = useState(0);
     const [loss, setLoss] = useState(0);
     const [oldUsername, setOldUsername] = useState(null);
@@ -54,19 +54,36 @@ function SettingsPage() {
     }, [userId]);
 
     async function handleAlterInfo() {
+        if (!userId) return;
         await fetching('changeup', 'POST', { userId, oldUsername, newUsername: username, oldPassword, newPassword: password });
     }
 
     async function handleDeleteAcc() {
+        if (!userId) return;
         await fetching('deleteacc', 'POST', { sessionId, userId });
         localStorage.removeItem('sessionId');
         localStorage.removeItem("user");
+        setUser(null);
+        setUserObj(null);
+        setUsername('');
+        setOldUsername('');
+        setWin(0);
+        setLoss(0);
+
     }
 
     async function handleLogOut() {
+        if (!userId) return;
         await remove(ref(database, `sessionId/${sessionId}`));
         localStorage.removeItem('sessionId');
         localStorage.removeItem("user");
+        setUser(null);
+        setUserObj(null);
+        setUsername('');
+        setOldUsername('');
+        setWin(0);
+        setLoss(0);
+
     }
 
     return (
