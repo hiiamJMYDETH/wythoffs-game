@@ -37,7 +37,7 @@ function useRematch(id, player, opponent) {
     useEffect(() => {
         if (!id) return;
 
-        const rematchRef = ref(database, `games/${id}/rematchState`);
+        const rematchRef = ref(database, `rematches/${id}`);
         const unsubscribe = onValue(rematchRef, (snapshot) => {
             if (!snapshot.exists()) {
                 setRematch(null);
@@ -50,12 +50,13 @@ function useRematch(id, player, opponent) {
 
             if (playerState === "1" && opponentState === "1") {
                 setRematch("accepted");
+
+                unsubscribe();
             } else if (playerState === "0" || opponentState === "0") {
                 setRematch("declined");
             } else {
                 setRematch("waiting");
             }
-
         });
 
         return () => unsubscribe();
@@ -64,11 +65,16 @@ function useRematch(id, player, opponent) {
     return rematch;
 }
 
+
 function PlayAgain({ player, opponent, id, handleGameId, handleGameOver }) {
     const status = useRematch(id, player, opponent);
 
     async function handleMatchClick(value) {
         await fetching("rematch", "POST", { value, player, id });
+    }
+
+    async function handleDecline() {
+        await remove(ref(database, `games/${id}`));
     }
 
     useEffect(() => {
@@ -80,6 +86,7 @@ function PlayAgain({ player, opponent, id, handleGameId, handleGameOver }) {
                 if (snapshot.exists()) {
                     handleGameId(snapshot.val());
                     handleGameOver(false);
+                    unsubscribe();
                 }
             });
 
@@ -87,12 +94,13 @@ function PlayAgain({ player, opponent, id, handleGameId, handleGameOver }) {
         }
 
         if (status === "declined") {
+            handleDecline();
             window.location.href = "/";
         }
     }, [status, id, player, opponent, handleGameId, handleGameOver]);
 
     return (
-        <div className="box">
+        <div className="box" style={{ position: 'relative' }}>
             <h2>Play Again</h2>
             <button className="button" onClick={() => handleMatchClick(true)}>Yes</button>
             <button className="button" onClick={() => handleMatchClick(false)}>No</button>
@@ -103,6 +111,7 @@ function PlayAgain({ player, opponent, id, handleGameId, handleGameOver }) {
         </div>
     );
 }
+
 
 
 function GamePageOnline() {
@@ -181,7 +190,7 @@ function GamePageOnline() {
         <div className="page">
             {isMobile ? <MobileSideBar /> : <SideBar />}
             <div className="center">
-                {gameOver && <PlayAgain player={userId} opponent={opponent} id={game} handleGameId={(value) => handleGameId(value)} handleGameOver={(value) => handleGameOver(value)}/>}
+                {gameOver && <PlayAgain player={userId} opponent={opponent} id={game} handleGameId={(value) => handleGameId(value)} handleGameOver={(value) => handleGameOver(value)} />}
                 {(game && !gameOver) ? (
                     <GameOnline id={game} player={userId} opponent={opponent} handleResult={(value) => handleGameOver(value)} />
                 ) : (

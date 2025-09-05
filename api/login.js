@@ -1,5 +1,6 @@
 // pages/api/login.js
 import { connectToDatabase } from "./config/db.js";
+import pool from "./config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import crypto from "crypto";
@@ -48,7 +49,8 @@ export default async function handler(req, res) {
             });
         }
 
-        const client = await connectToDatabase();
+        // const client = await connectToDatabase();
+        const client = pool;
         const result = await client.query(
             "SELECT * FROM users WHERE email = $1 OR username = $2",
             [email, username]

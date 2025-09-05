@@ -17,7 +17,7 @@ export default async function handler(req, res) {
             return res.status(404).json({ error: "Missing required fields" });
         }
 
-        const rematchRef = ref(database, `games/${oldGameId}/rematchState`);
+        const rematchRef = ref(database, `rematches/${oldGameId}`);
         const snapshot = await get(rematchRef);
 
         if (!snapshot.exists()) {
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
         const p2 = state[opponent];
 
         if (p1 === "1" && p2 === "1") {
+            // This requires an atomic function to ensure only one game created from two of the same players.
             const newGameId = await redisClient.incr('game:id:counter');
 
             await set(ref(database, `games/${newGameId}`), {

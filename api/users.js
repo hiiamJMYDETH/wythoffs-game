@@ -1,4 +1,5 @@
-import { connectToDatabase } from "./config/db.js";
+// import { connectToDatabase } from "./config/db.js";
+import pool from "./config/db.js";
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');  
@@ -13,7 +14,8 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            const client = await connectToDatabase();
+            // const client = await connectToDatabase();
+            const client = pool;
             const results = await client.query("SELECT * FROM users");
             res.status(200).json(results.rows);
         }

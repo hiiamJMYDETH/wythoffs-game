@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const {value, player, id} = req.body;
     if (value === null || !player || !id) return res.status(404).json({message: "Missing player choice or player"});
 
-    const choiceRef = ref(database, `games/${id}/rematchState`);
+    const choiceRef = ref(database, `rematches/${id}`);
     const choiceSnap = await get(choiceRef);
     if (!choiceSnap.exists()) return res.status(404).json({message: "Game rematch choice does not exist"});
 

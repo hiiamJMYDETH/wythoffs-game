@@ -1,6 +1,7 @@
 import { database } from "./config/firebase.js";
 import { ref, get, set, update } from "firebase/database";
-import { connectToDatabase } from "./config/db.js";
+// import { connectToDatabase } from "./config/db.js";
+import pool from "./config/db.js";
 
 async function fetchGameResults(client, game) {
     const { createdAt, gameId, history, players } = game;
@@ -25,14 +26,15 @@ export default async function handler(req, res) {
         return res.status(404).json({ message: "Missing id, player, or opponent" });
     }
 
-    const client = await connectToDatabase();
+    // const client = await connectToDatabase();
+    const client = pool;
     const gameRef = ref(database, `games/${gameId}`);
     const gameSnap = await get(gameRef);
 
     if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
 
     await set(gameRef, { ...gameSnap.val(), state: "completed" });
-    const rematchRef = ref(database, `games/${gameId}/rematchState`);
+    const rematchRef = ref(database, `rematches/${gameId}`);
     const rematchSnap = await get(rematchRef);
 
     if (!rematchSnap.exists() || typeof rematchSnap.val() !== "object") {
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
     }
     const game = gameSnap.val();
 
-    await fetchGameResults(client, game);
+    await fetchGameResults(pool, game);
 
     const histRef = ref(database, `games/${gameId}/history`);
     const histSnap = await get(histRef);

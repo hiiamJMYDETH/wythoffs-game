@@ -1,4 +1,5 @@
-import { connectToDatabase } from "./config/db.js";
+// import { connectToDatabase } from "./config/db.js";
+import pool from "./config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import crypto from "crypto"; // Import the crypto module for generating UUIDs
@@ -39,7 +40,8 @@ export default async function handler(req, res) {
     }
 
     // Connect to PostgreSQL
-    const client = await connectToDatabase();
+    const client = pool;
+    // const client = await connectToDatabase();
 
     // Check if user already exists
     const existing = await client.query(

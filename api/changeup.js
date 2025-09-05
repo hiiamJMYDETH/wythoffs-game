@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
-import { connectToDatabase } from "./config/db.js";
+// import { connectToDatabase } from "./config/db.js";
+import pool from ".config/db.js";
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -20,7 +21,8 @@ export default async function handler(req, res) {
     }
 
     const saltRounds = 10;
-    const client = await connectToDatabase();
+    // const client = await connectToDatabase();
+    const client = pool;
     const result = await client.query(
         "SELECT * FROM users WHERE username = $1 AND ID = $2",
         [oldUsername, userId]

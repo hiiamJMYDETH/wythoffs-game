@@ -1,4 +1,5 @@
-import { connectToDatabase } from "./config/db.js";
+// import { connectToDatabase } from "./config/db.js";
+import pool from "./config/db.js";
 import { database } from "./config/firebase.js";
 import { ref, remove } from "firebase/database";
 
@@ -15,7 +16,8 @@ export default async function handler(req, res) {
 
     if (!sessionId || !userId) return res.status(404).json({message: "Missing user id"});
 
-    const client = await connectToDatabase();
+    // const client = await connectToDatabase();
+    const client = pool;
 
     await remove(ref(database, `sessions/${sessionId}`));
     await remove(ref(database, `users/${userId}`));
