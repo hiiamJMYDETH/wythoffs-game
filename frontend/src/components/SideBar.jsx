@@ -23,7 +23,7 @@ function SideBar() {
     useEffect(() => {
         async function loadUsers() {
             try {
-                const users = await fetching('loaduser');
+                const users = await fetching('loaduserid');
                 console.log('Users:', users);
                 localStorage.setItem('user', JSON.stringify(users));
                 setUser(users);

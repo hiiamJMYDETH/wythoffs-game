@@ -1,17 +1,18 @@
 import MobileSideBar from "../components/MobileSideBar";
 import SideBar from "../components/SideBar";
 import { useMobileDetect, fetching, LoadingDiv } from "../components/utilities";
+import Player from "../components/Player";
 import "../styles/page.css";
 import { useState, useEffect } from "react";
 
 function SettingsPage() {
     const [loading, setLoading] = useState(false);
-    // const user = localStorage.getItem('user') || null;
-    const user = "null";
+    const user = localStorage.getItem('user') || null;
+    const userId = user.userId || null;
     const [error, setError] = useState(null);
     const isMobile = useMobileDetect();
+    console.log("User id: ", userId);
 
-    let language = "English"
     return (
         <div className="page">
             {isMobile ? (
@@ -32,7 +33,7 @@ function SettingsPage() {
                     }}>
                         <h3>Settings</h3>
                         {user ? (<>
-                            {user}
+                            <Player name={userId} />
                         </>) : (<>
                             <h3>Guest</h3>
                             <p>You must login to access more features.
