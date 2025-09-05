@@ -1,9 +1,10 @@
 import MobileSideBar from "../components/MobileSideBar";
-import Player from "../components/Player";
 import SideBar from "../components/SideBar";
 import { useMobileDetect, LoadingDiv, fetching } from "../components/utilities";
 import "../styles/page.css";
 import { useState, useEffect } from "react";
+import { database } from "../../firebase";
+import { remove, ref } from "firebase/database";
 import UserDefault from "../assets/User default.svg";
 
 function SettingsPage() {
@@ -58,6 +59,12 @@ function SettingsPage() {
 
     async function handleDeleteAcc() {
         await fetching('deleteacc', 'POST', { sessionId, userId });
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem("user");
+    }
+
+    async function handleLogOut() {
+        await remove(ref(database, `sessionId/${sessionId}`));
         localStorage.removeItem('sessionId');
         localStorage.removeItem("user");
     }
@@ -149,7 +156,9 @@ function SettingsPage() {
                                 />
                                 <button className="button" style={{ width: '100%', margin: 'auto' }} onClick={handleAlterInfo}>Change username/password</button>
                                 <br />
-                                <button className="button main" onClick={handleDeleteAcc}>Delete account</button>
+                                <button className="button" style={{ width: '100%', margin: 'auto' }} onClick={handleDeleteAcc}>Delete account</button>
+                                <br />
+                                <button className="button main" onClick={handleLogOut}>Log out</button>
                             </>
                         ) : (
                             <>
