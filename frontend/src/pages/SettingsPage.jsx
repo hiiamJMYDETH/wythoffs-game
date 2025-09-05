@@ -19,6 +19,9 @@ function SettingsPage() {
     const [loss, setLoss] = useState(0);
     const [oldUsername, setOldUsername] = useState(null);
     const [userObj, setUserObj] = useState(null);
+    const [username, setUsername] = useState('');
+    const [oldPassword, setOldPassword] = useState('');
+    const [password, setPassword] = useState('');
     var image = UserDefault;
     useEffect(() => {
         async function loadUsers() {
@@ -46,7 +49,12 @@ function SettingsPage() {
         if (userId) {
             loadUsers();
         }
-    }, [userId]); 
+    }, [userId]);
+
+    async function handleAlterInfo() {
+        const result = await fetching('changeup', 'POST', {userId, oldUsername, newUsername: username, oldPassword, newPassword: password});
+        console.log("Bruh");
+    }
 
     return (
         <div className="page">
@@ -94,7 +102,12 @@ function SettingsPage() {
                                         fontSize: 'large',
                                         margin: '5px'
                                     }}
-                                    placeholder="New username" />
+                                    placeholder="New username"
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                    }}
+                                />
                                 <input
                                     type="password"
                                     style={{
@@ -106,7 +119,12 @@ function SettingsPage() {
                                         fontSize: 'large',
                                         margin: '5px'
                                     }}
-                                    placeholder="Old password" />
+                                    placeholder="Old password"
+                                    value={oldPassword}
+                                    onChange={(e) => {
+                                        setOldPassword(e.target.value);
+                                    }}
+                                />
                                 <input type="password"
                                     style={{
                                         borderBottom: '1px solid black',
@@ -117,8 +135,13 @@ function SettingsPage() {
                                         fontSize: 'large',
                                         margin: '5px'
                                     }}
-                                    placeholder="New password" />
-                                <button className="button" style={{ width: '100%', margin: 'auto' }} >Change username/password</button>
+                                    placeholder="New password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                    }}
+                                />
+                                <button className="button" style={{ width: '100%', margin: 'auto' }} onClick={handleAlterInfo}>Change username/password</button>
                                 <br />
                                 <button className="button main">Delete account</button>
                             </>
