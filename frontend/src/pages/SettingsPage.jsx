@@ -10,6 +10,7 @@ function SettingsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const isMobile = useMobileDetect();
+    const sessionId = localStorage.getItem("sessionId") || null;
     const [user, setUser] = useState(() => {
         const stored = localStorage.getItem('user');
         return stored ? JSON.parse(stored) : null;
@@ -52,8 +53,13 @@ function SettingsPage() {
     }, [userId]);
 
     async function handleAlterInfo() {
-        const result = await fetching('changeup', 'POST', {userId, oldUsername, newUsername: username, oldPassword, newPassword: password});
-        console.log("Bruh");
+        await fetching('changeup', 'POST', { userId, oldUsername, newUsername: username, oldPassword, newPassword: password });
+    }
+
+    async function handleDeleteAcc() {
+        await fetching('deleteacc', 'POST', { sessionId, userId });
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem("user");
     }
 
     return (
@@ -143,7 +149,7 @@ function SettingsPage() {
                                 />
                                 <button className="button" style={{ width: '100%', margin: 'auto' }} onClick={handleAlterInfo}>Change username/password</button>
                                 <br />
-                                <button className="button main">Delete account</button>
+                                <button className="button main" onClick={handleDeleteAcc}>Delete account</button>
                             </>
                         ) : (
                             <>
