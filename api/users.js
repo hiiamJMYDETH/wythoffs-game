@@ -1,6 +1,4 @@
 import { connectToDatabase } from "./config/db.js";
-import authenticateToken from "./config/auth.js";
-import redisClient from "./config/redis.js";
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');  
@@ -16,10 +14,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         try {
             const client = await connectToDatabase();
-            const temp_user = await redisClient.hGetAll("user:1001");
-            console.log("temp user from redis: ", temp_user);
             const results = await client.query("SELECT * FROM users");
-            res.status(200).json(results);
+            res.status(200).json(results.rows);
         }
         catch (error) {
             console.log("Error message: ", error);
