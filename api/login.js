@@ -1,14 +1,12 @@
-// pages/api/login.js
-import { connectToDatabase } from "../config/db.js";
+import pool from "./config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { database } from "../config/firebase.js";
+import { database } from "./config/firebase.js";
 import { ref, set } from "firebase/database";
 
 dotenv.config();
 
-// Store user in Firebase (indexed by userId)
 async function storeUserInFirebase(user) {
     await set(ref(database, `users/${user.id}`), {
         name: user.username,
@@ -17,9 +15,8 @@ async function storeUserInFirebase(user) {
     });
 }
 
-// Store session in Firebase
 async function storeSessionInFirebase(sessionId, userId) {
-    const expiresAt = Date.now() + 3600 * 1000; // 1 hour
+    const expiresAt = Date.now() + 3600 * 1000; 
     await set(ref(database, `sessions/${sessionId}`), {
         user_id: userId,
         expiresAt
@@ -48,7 +45,7 @@ export default async function handler(req, res) {
             });
         }
 
-        const client = await connectToDatabase();
+        const client = pool;
         const result = await client.query(
             "SELECT * FROM users WHERE email = $1 OR username = $2",
             [email, username]
@@ -60,19 +57,16 @@ export default async function handler(req, res) {
 
         const user = result.rows[0];
 
-        // Verify password
         const match = await bcrypt.compare(password, user.usr_pwd);
         if (!match) {
             return res.status(401).json({ message: "Invalid login" });
         }
 
-        // Save user & session in Firebase
         await storeUserInFirebase(user);
 
         const sessionId = crypto.randomUUID();
         await storeSessionInFirebase(sessionId, user.id);
 
-        // Send sessionId back to client
         return res.status(200).json({
             message: "Login successful",
             sessionId,

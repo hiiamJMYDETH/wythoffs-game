@@ -1,4 +1,3 @@
-// import redisClient from "../config/redis.js";
 import { connectRedis } from "../config/redis.js";
 import checkSession from "../config/checksession.js";
 import { database } from "../config/firebase.js";
