@@ -122,9 +122,6 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
 
     const leftBalls = history?.[currentMove]?.left ?? [];
     const rightBalls = history?.[currentMove]?.right ?? [];
-    console.log("History: ", history);
-    console.log("Player turn: ", playerIsNext);
-    console.log("Is it game over: ", gameOver);
 
     useEffect(() => {
         if (!id) return;
@@ -147,16 +144,15 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     setSavedBalls([]);
                 }
 
-                const left = newMove.left ?? [];
-                const right = newMove.right ?? [];
-                if (left.length === 0 && right.length === 0) {
-                    const winnerId = newMove.movedBy !== 'system' ? newMove.movedBy : null;
+                const left = newMove?.left ?? [];
+                const right = newMove?.right ?? [];
+                const isSystemMove = newMove.movedBy === "system";
+                if ((left.length === 0 && right.length === 0) && !isSystemMove && newMove.move !== 0) {
+                    const winnerId = newMove.movedBy;
                     setWinner(winnerId);
                     setGameOver(true);
 
-                    if (winnerId) {
-                        fetching('fetchresults', 'POST', { gameId: id, player, opponent });
-                    }
+                    fetching('fetchresults', 'POST', { gameId: id, player, opponent });
                 }
 
                 return updated;

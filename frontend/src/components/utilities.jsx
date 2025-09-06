@@ -59,11 +59,11 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (hasStarted && !isGameOver) {
+    if (hasStarted && !isGameOver && startTime === null) {
       const timeRef = ref(database, `games/${gameId}/startTime`);
       set(timeRef, Date.now());
     }
-  }, [hasStarted, isGameOver, gameId]);
+  }, [hasStarted, isGameOver, gameId, startTime]);
 
   useEffect(() => {
     const timeRef = ref(database, `games/${gameId}/startTime`);
@@ -72,6 +72,7 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
       if (value) setStartTime(value);
     });
   }, [gameId]);
+
 
   useEffect(() => {
     if (!startTime || isGameOver) {
@@ -86,6 +87,7 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
 
     return () => clearInterval(intervalId);
   }, [startTime, isGameOver]);
+
 
   useEffect(() => {
     if (count >= maxSeconds) {
