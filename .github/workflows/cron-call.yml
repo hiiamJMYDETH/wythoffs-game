@@ -1,15 +1,15 @@
-# name: Hourly Vercel Cron
+name: Hourly Vercel Cron
 
-# on:
-#   schedule:
-#     # Runs every hour, on the hour
-#     - cron: "0 * * * *"
-#   workflow_dispatch: # lets you trigger manually from GitHub UI
+on:
+  schedule:
+    # Runs every hour, on the hour
+    - cron: "0 * * * *"
+  workflow_dispatch: # lets you trigger manually from GitHub UI
 
-# jobs:
-#   call-vercel-api:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Call Vercel API route
-#         run: |
-#           curl -s -o /dev/null -w "%{http_code}" https://wythoffs-game.vercel.app/api/autoCleanSessions.js
+jobs:
+  call-vercel-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Vercel API route
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://wythoffs-game.vercel.app/api/autoCleanSessions.js
