@@ -1,9 +1,0 @@
-3. Update the settings page to include deletion of the user and changing the password.
-4. set a separate class that determines the background of stuff, with the exception of the marbles
-5. modify the CPU algorithm to have several modes. One is the 
-(I've just known the rules and take the most) and the optimal winning strat
-6. Make a leaderboard of all the users played in the game (requires at least 5 games)
-7. Fix the counter
-8. Redesign the UI
-
-
