@@ -323,8 +323,8 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
                         <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
-                            <Player name={player} />
-                            <Player name={opponent} />
+                            <Player name={Number(player)} />
+                            <Player name={Number(opponent)} />
                         </div >
                     </div>
                     <div className="status" ref={gameInfo}>

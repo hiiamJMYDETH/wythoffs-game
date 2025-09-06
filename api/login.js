@@ -1,8 +1,8 @@
-import pool from "./config/db.js";
+import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { database } from "./config/firebase.js";
+import { database } from "../config/firebase.js";
 import { ref, set } from "firebase/database";
 
 dotenv.config();

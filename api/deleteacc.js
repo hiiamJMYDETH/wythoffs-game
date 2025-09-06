@@ -1,5 +1,5 @@
-import pool from "./config/db.js";
-import { database } from "./config/firebase.js";
+import pool from "../config/db.js";
+import { database } from "../config/firebase.js";
 import { ref, remove } from "firebase/database";
 
 export default async function handler(req, res) {
