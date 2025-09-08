@@ -145,7 +145,7 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
     credentials: "include",
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Session ${localStorage.getItem('sessionId') || ''}`
+      'Authorization': `User ${localStorage.getItem('userId')} || ''}`
     }
   };
 
@@ -156,7 +156,6 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
   try {
     const response = await fetch(`${apiUrl}/${req}`, options);
 
-    // Read the body as text once
     const text = await response.text();
     console.log("Raw response:", text);
 
@@ -164,7 +163,6 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
       throw new Error(`API request failed: ${response.status} ${response.statusText} - ${text}`);
     }
 
-    // Try to parse JSON
     try {
       return JSON.parse(text);
     } catch {

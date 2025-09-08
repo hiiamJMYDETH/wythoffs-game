@@ -2,21 +2,20 @@ import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { database } from "../config/firebase.js";
-import { ref, set } from "firebase/database";
+import {adminDb, adminAuth} from "../config/firebase.js";
 
 dotenv.config();
 
-async function storeUserInFirebase(user) {
-    await set(ref(database, `users/${user.id}`), {
-        name: user.username,
-        email: user.email,
-        id: user.id
-    });
-}
+// async function storeUserInFirebase(user) {
+//     await set(ref(database, `users/${user.id}`), {
+//         name: user.username,
+//         email: user.email,
+//         id: user.id
+//     });
+// }
 
 async function storeSessionInFirebase(sessionId, userId) {
-    const expiresAt = Date.now() + 3600 * 1000; 
+    const expiresAt = Date.now() + 3600 * 1000;
     await set(ref(database, `sessions/${sessionId}`), {
         user_id: userId,
         expiresAt
@@ -37,9 +36,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { username, email, password } = req.body;
+        const { userId, email } = req.body;
 
-        if (!username || !email || !password) {
+        if (!userId || !email) {
             return res.status(400).json({
                 message: "Missing username, email, or password",
             });
@@ -47,30 +46,34 @@ export default async function handler(req, res) {
 
         const client = pool;
         const result = await client.query(
-            "SELECT * FROM users WHERE email = $1 OR username = $2",
-            [email, username]
+            "SELECT * FROM users WHERE email = $1 AND id = $2",
+            [email, userId]
         );
 
         if (result.rows.length === 0) {
             return res.status(401).json({ message: "Invalid login" });
         }
 
-        const user = result.rows[0];
+        // const user = result.rows[0];
 
-        const match = await bcrypt.compare(password, user.usr_pwd);
-        if (!match) {
-            return res.status(401).json({ message: "Invalid login" });
-        }
+        // const match = await bcrypt.compare(password, user.usr_pwd);
+        // if (!match) {
+        //     return res.status(401).json({ message: "Invalid login" });
+        // }
 
-        await storeUserInFirebase(user);
+        // const userId = user.id;
 
-        const sessionId = crypto.randomUUID();
-        await storeSessionInFirebase(sessionId, user.id);
+        // await signInWithEmailAndPassword(auth, email, hashedPassword);
+
+        // await storeUserInFirebase(user);
+
+        // const sessionId = crypto.randomUUID();
+        // await storeSessionInFirebase(sessionId, userId);
 
         return res.status(200).json({
+            status: "success",
             message: "Login successful",
-            sessionId,
-            user: { id: user.id, name: user.username, email: user.email }
+            userId
         });
     } catch (error) {
         console.error("Error during login:", error);

@@ -36,3 +36,4 @@ topo-ordered-commits-test-suite/
 dataconnect
 dataconnect-generated
 .firebase
+serviceAccountKey.json

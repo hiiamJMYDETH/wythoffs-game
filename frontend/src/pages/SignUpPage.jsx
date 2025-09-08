@@ -2,6 +2,8 @@ import { useState } from "react";
 import { fetching } from "../components/utilities";
 import { useNavigate } from "react-router-dom";
 import "../styles/page.css";
+import { auth } from "../config/firebase.js";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 function SignUpPage() {
     const navigate = useNavigate();
@@ -25,14 +27,18 @@ function SignUpPage() {
         }
         setWrongInfo(false);
         setMissingInfo(false);
-        const response = await fetching('signup', 'POST', {name: username, email: email, password: password});
-        if (response.message && response.message === 'Successfully created an account') {
-            localStorage.setItem("token", response.token);
-            navigate('/');
-        }
-        else {
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const { uid } = userCredential.user;
+
+        const response = await fetching('signup', 'POST', { userId: uid, username, email: email });
+        if (response.status != "success") {
             setWrongInfo(true);
+            return;
         }
+        localStorage.setItem('userId', uid);
+        navigate('/');
+
     }
     return (
         <div className="page">

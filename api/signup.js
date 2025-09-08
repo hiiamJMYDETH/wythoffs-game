@@ -1,20 +1,17 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import crypto from "crypto"; 
-import { database } from "../config/firebase.js"; 
-import { ref, set } from "firebase/database";
-
+import crypto from "crypto";
+import { adminDb, adminAuth } from "../config/firebase.js";
 dotenv.config();
 
-async function storeUserInFirebase(name, email, id) {
-  await set(ref(database, `users/${id}`), { name, email, id });
-}
-
-async function storeSessionInFirebase(sessionId, userId) {
-  const expiresAt = Date.now() + 3600 * 1000; 
-  await set(ref(database, `sessions/${sessionId}`), { user_id: userId, expiresAt });
-}
+// async function storeSessionInFirebase(sessionId, userId) {
+//     const expiresAt = Date.now() + 3600 * 1000;
+//     await set(ref(database, `sessions/${sessionId}`), {
+//         user_id: userId,
+//         expiresAt
+//     });
+// }
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -31,35 +28,46 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "Missing username/email/password" });
-    }
+    const { userId, username, email } = req.body;
+
+    if (!userId || !username || !email) return res.status(404).json({ error: "Missing userId, email, or username" });
 
     const client = pool;
 
-    const existing = await client.query(
-      "SELECT * FROM users WHERE email = $1 OR username = $2",
-      [email, name]
-    );
-    if (existing.rows.length > 0) {
-      return res.status(409).json({ message: "Email or username already exists" });
-    }
+    // const users = await client.query(
+    //   "SELECT * FROM users"
+    // );
+    // console.log("Users: ", users.rows);
 
-    const userId = crypto.randomUUID();
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // const existing = await client.query(
+    //   "SELECT * FROM users WHERE email = $1 OR username = $2",
+    //   [email, name]
+    // );
+    // console.log("Existing", existing.rows);
+    // if (existing.rows.length > 0) {
+    //   return res.status(409).json({ message: "Email or username already exists" });
+    // }
+
 
     await client.query(
-      "INSERT INTO users (username, email, usr_pwd, creation_date, id) VALUES ($1, $2, $3, CURRENT_DATE, $4)",
-      [name, email, hashedPassword, userId]
+      "INSERT INTO users (username, email, creation_date, id) VALUES ($1, $2, CURRENT_DATE, $3)",
+      [username, email, userId]
     );
 
-    await storeUserInFirebase(name, email, userId);
+    await adminDb.ref(`users/${userId}`).set({
+      email,
+      username,
+      win: 0,
+      loss: 0
+    });
+    // await signInWithEmailAndPassword(auth, email, hashedPassword);
 
-    const sessionId = crypto.randomUUID();
-    await storeSessionInFirebase(sessionId, userId);
+    // await storeUserInFirebase(name, email, userId);
 
-    res.status(201).json({ message: "Successfully created an account", sessionId });
+    // const sessionId = crypto.randomUUID();
+    // await storeSessionInFirebase(sessionId, userId);
+
+    res.status(201).json({ message: "Successfully created an account", status: "success", userId });
   } catch (error) {
     console.error("🚨 Error:", error);
     res.status(500).json({ error: "Internal Server Error" });

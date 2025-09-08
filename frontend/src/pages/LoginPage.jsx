@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetching } from "../components/utilities";
 import "../styles/page.css";
+import { auth } from "../config/firebase.js";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 function LoginPage() {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [wrongInfo, setWrongInfo] = useState(false);
     const [missingInfo, setMissingInfo] = useState(false);
@@ -18,14 +19,29 @@ function LoginPage() {
         }
         setWrongInfo(false);
         setMissingInfo(false);
-        const response = await fetching('login', 'POST', { username: email, email: email, password: password });
-        if (response.message && response.message === 'Login successful') {
-            localStorage.setItem("sessionId", response.sessionId);
-            navigate('/');
-        }
-        else {
+
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const { uid } = userCredential.user;
+
+        const response = await fetching('login', 'POST', { userId: uid, email: email });
+        if (response.status != "success") {
             setWrongInfo(true);
+            return;
         }
+        localStorage.setItem('userId', uid);
+        navigate('/');
+        // try {
+        //     console.log("HTTP status:", response.status, response.ok);
+        //     if (!response.ok) {
+        //         setWrongInfo(true);
+        //         throw new Error("Login failed");
+        //     }
+        //     const data = response.json();
+        //     console.log("Login successful: ", data);
+        // }
+        // catch (err) {
+        //     console.error("Login error caught: ", err);
+        // }
     }
     return (
         <div className="page">
@@ -50,7 +66,7 @@ function LoginPage() {
                             margin: '5px'
                         }}
                         type="text"
-                        placeholder="Email/Username"
+                        placeholder="Email"
                         value={email}
                         onChange={(e) => {
                             setEmail(e.target.value);

@@ -7,36 +7,105 @@ import UserDefault from "../assets/User default.svg";
 import SettingsIcon from "../assets/Settings.svg";
 import HelpIcon from "../assets/Help.svg";
 
+async function fetchUser(userId, setter) {
+    const apiUrl =
+        import.meta.env.VITE_API_URL ||
+        (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
+    const options = {
+        method: 'GET',
+        credentials: "include",
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+
+    const url = `${apiUrl}/loaduserid?userId=${encodeURIComponent(userId)}`;
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status ${response.status}`);
+        }
+        const responseJson = await response.json();
+        setter(responseJson.user);
+
+    }
+    catch (err) {
+        console.error("Error loading users: ", err.message);
+        localStorage.removeItem('userId');
+        setter(null);
+    }
+}
+
+// async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
+//     const apiUrl =
+//         import.meta.env.VITE_API_URL ||
+//         (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
+
+//     const options = {
+//         method: reqMethod,
+//         credentials: "include",
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'Authorization': `User ${localStorage.getItem('userId')} || ''}`
+//         }
+//     };
+
+//     if ((reqMethod === 'POST' || reqMethod === 'PUT') && reqData !== "Your data here") {
+//         options.body = JSON.stringify(reqData);
+//     }
+
+//     try {
+//         const response = await fetch(`${apiUrl}/${req}`, options);
+
+//         // Read the body as text once
+//         const text = await response.text();
+//         console.log("Raw response:", text);
+
+//         if (!response.ok) {
+//             throw new Error(`API request failed: ${response.status} ${response.statusText} - ${text}`);
+//         }
+
+//         // Try to parse JSON
+//         try {
+//             return JSON.parse(text);
+//         } catch {
+//             return text || 'No message received';
+//         }
+//     } catch (error) {
+//         throw new Error(`Fetch error: ${error.message}`);
+//     }
+// }
+
 
 function SideBar() {
     const [playOpts, setPlayOpts] = useState(false);
-    const [user, setUser] = useState(() => {
-        const stored = localStorage.getItem('user');
-        return stored ? JSON.parse(stored) : null;
-    })
+    const [user, setUser] = useState(null);
+    const userId = localStorage.getItem('userId') || null;
     const navigate = useNavigate();
     const play = useRef(null);
     const playMenu = useRef(null);
     const menu = useRef(null);
-    const token = localStorage.getItem('sessionId') || null;
+    // const token = localStorage.getItem('sessionId') || null;
 
     useEffect(() => {
-        async function loadUsers() {
-            try {
-                const users = await fetching('loaduserid');
-                console.log('Users:', users);
-                localStorage.setItem('user', JSON.stringify(users));
-                setUser(users);
+        // async function loadUsers() {
+        //     try {
+        //         const users = await fetching('loaduserid', 'GET', { userId });
+        //         console.log('Users:', users);
+        //         localStorage.setItem('user', JSON.stringify(users));
+        //         setUser(users);
 
-            } catch (error) {
-                console.error('Error loading users:', error.message);
-                localStorage.removeItem('sessionId');
-                localStorage.removeItem('user');
-                setUser(null);
-            }
-        }
-        loadUsers();
-    }, [token]);
+        //     } catch (error) {
+        //         console.error('Error loading users:', error.message);
+        //         localStorage.removeItem('user');
+        //         setUser(null);
+        //     }
+        // }
+        fetchUser(userId, setUser);
+        // loadUsers();
+    }, [userId]);
 
     useEffect(() => {
         if (!play.current) return;
