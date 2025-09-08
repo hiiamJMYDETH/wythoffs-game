@@ -40,14 +40,18 @@ function handleClick(id, navigate) {
     navigate('/settings');
     return;
   }
-  if (id === "login") {
-    navigate('/login');
+  if (id === "register") {
+    navigate('/register');
     return;
   }
-  if (id === "signup") {
-    navigate('/signup');
-    return;
-  }
+  // if (id === "login") {
+  //   navigate('/login');
+  //   return;
+  // }
+  // if (id === "signup") {
+  //   navigate('/signup');
+  //   return;
+  // }
   if (id === "help") {
     navigate('/help');
     return;
@@ -173,6 +177,34 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
   }
 }
 
+async function fetchUser(userId) {
+    const apiUrl =
+        import.meta.env.VITE_API_URL ||
+        (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
+    const options = {
+        method: 'GET',
+        credentials: "include",
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+
+    const url = `${apiUrl}/loaduserid?userId=${encodeURIComponent(userId)}`;
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status ${response.status}`);
+        }
+        const responseJson = await response.json();
+        return responseJson;
+    }
+    catch (err) {
+        console.error("Error loading users: ", err.message);
+        localStorage.removeItem('userId');
+        return null;
+    }
+}
 
 function LoadingDiv() {
   return (
@@ -188,4 +220,4 @@ function LoadingDiv() {
 
 
 
-export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle };
+export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle, fetchUser };

@@ -1,4 +1,3 @@
-import checkSession from "../config/checksession.js";
 import { adminDb } from "../config/firebase.js";
 
 export default async function handler(req, res) {
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
   try {
 
     const userId = req.query.userId;
-    console.log("Requested body: ", req.query.userId);
 
     if (!userId) return res.status(404).json({error: "Missing UID"});
 

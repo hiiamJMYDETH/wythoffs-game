@@ -20,8 +20,6 @@ const firebaseConfig = {
     databaseURL: import.meta.env.VITE_FIREBASE_DB_URL,
 };
 
-console.log("Firebase config:", firebaseConfig);
-
 
 // Initialize Firebase
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);

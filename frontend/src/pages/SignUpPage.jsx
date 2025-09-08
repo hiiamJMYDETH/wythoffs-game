@@ -31,7 +31,7 @@ function SignUpPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const { uid } = userCredential.user;
 
-        const response = await fetching('signup', 'POST', { userId: uid, username, email: email });
+        const response = await fetching('registeracc', 'POST', { type: 'signup', userId: uid, username, email: email });
         if (response.status != "success") {
             setWrongInfo(true);
             return;
