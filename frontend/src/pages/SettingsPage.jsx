@@ -1,22 +1,18 @@
 import MobileSideBar from "../components/MobileSideBar";
 import SideBar from "../components/SideBar";
-import { useMobileDetect, LoadingDiv, fetching } from "../components/utilities";
+import { useMobileDetect, LoadingDiv, fetchUser, fetching } from "../components/utilities";
 import "../styles/page.css";
 import { useState, useEffect } from "react";
-import { database } from "../config/firebase.js";
-import { remove, ref } from "firebase/database";
+import { useNavigate } from "react-router-dom";
 import UserDefault from "../assets/User default.svg";
+import { auth } from "../config/firebase.js";
+import { signOut } from "firebase/auth";
 
 function SettingsPage() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
     const isMobile = useMobileDetect();
-    const sessionId = localStorage.getItem("sessionId") || null;
-    const [user, setUser] = useState(() => {
-        const stored = localStorage.getItem('user');
-        return stored ? JSON.parse(stored) : null;
-    });
-    const userId = user?.userId || null;
+    const userId = localStorage.getItem('userId') || null;
     const [win, setWin] = useState(0);
     const [loss, setLoss] = useState(0);
     const [oldUsername, setOldUsername] = useState(null);
@@ -26,31 +22,26 @@ function SettingsPage() {
     const [password, setPassword] = useState('');
     var image = UserDefault;
     useEffect(() => {
-        async function loadUsers() {
+        async function loadUser() {
+            setLoading(true);
             try {
-                setLoading(true);
-                const users = await fetching('users');
-                if (users) {
-                    const matchedUser = users.find(u => u.id === userId);
-                    if (matchedUser) {
-                        const { username, usr_pwd, win, lose } = matchedUser;
-                        setUserObj(matchedUser);
-                        setOldUsername(username);
-                        setWin(win);
-                        setLoss(lose);
-                    }
+                const data = await fetchUser(userId);
+                if (data.user) {
+                    const user = data.poolUser[0];
+                    setUserObj(user);
+                    setWin(user.win);
+                    setLoss(user.lose);
+                    setOldUsername(user.username);
                 }
-            } catch (error) {
-                console.error('Error loading users:', error.message);
-                localStorage.removeItem('token');
+            } catch (err) {
+                console.error(err);
+                setUserObj(null);
+                localStorage.removeItem('userId');
             } finally {
                 setLoading(false);
             }
         }
-
-        if (userId) {
-            loadUsers();
-        }
+        if (userId) loadUser();
     }, [userId]);
 
     async function handleAlterInfo() {
@@ -60,10 +51,8 @@ function SettingsPage() {
 
     async function handleDeleteAcc() {
         if (!userId) return;
-        await fetching('deleteacc', 'POST', { sessionId, userId });
-        localStorage.removeItem('sessionId');
-        localStorage.removeItem("user");
-        setUser(null);
+        await fetching('deleteacc', 'POST', { userId });
+        localStorage.removeItem("userId");
         setUserObj(null);
         setUsername('');
         setOldUsername('');
@@ -74,16 +63,22 @@ function SettingsPage() {
 
     async function handleLogOut() {
         if (!userId) return;
-        await remove(ref(database, `sessionId/${sessionId}`));
-        localStorage.removeItem('sessionId');
-        localStorage.removeItem("user");
-        setUser(null);
-        setUserObj(null);
-        setUsername('');
-        setOldUsername('');
-        setWin(0);
-        setLoss(0);
+        signOut(auth).then(() => {
+            localStorage.removeItem("userId");
+            setUserObj(null);
+            setUsername('');
+            setOldUsername('');
+            setWin(0);
+            setLoss(0);
+        }).catch((error) => {
+            console.error("Error signing out: ", error);
+        });
 
+    }
+
+    function handleRegisterButton() {
+        navigate('/register');
+        return;
     }
 
     return (
@@ -116,7 +111,6 @@ function SettingsPage() {
                         ) : (<>
                             <h3>Guest</h3>
                             <p>You must login to access more features.
-                                Also, there's like no features yet.
                             </p>
                         </>)}
                         {userObj ? (
@@ -180,9 +174,7 @@ function SettingsPage() {
                         ) : (
                             <>
                                 <br />
-                                <button className="button main" style={{ minHeight: '100px' }}>Sign Up</button>
-                                <br />
-                                <button className="button main" style={{ minHeight: '100px' }}>Login</button>
+                                <button className="button main" style={{ minHeight: '100px' }} onClick={handleRegisterButton}>Register an Account</button>
                             </>
                         )}
                     </div>

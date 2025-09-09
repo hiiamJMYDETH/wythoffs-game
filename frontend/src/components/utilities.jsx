@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { database } from "../config/firebase.js";
-import { ref, set, onValue } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 
 function useMobileDetect() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -40,12 +40,8 @@ function handleClick(id, navigate) {
     navigate('/settings');
     return;
   }
-  if (id === "login") {
-    navigate('/login');
-    return;
-  }
-  if (id === "signup") {
-    navigate('/signup');
+  if (id === "register") {
+    navigate('/register');
     return;
   }
   if (id === "help") {
@@ -59,9 +55,11 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (hasStarted && !isGameOver && startTime === null) {
-      const timeRef = ref(database, `games/${gameId}/startTime`);
-      set(timeRef, Date.now());
+    if (hasStarted && !isGameOver) {
+      fetchGameState('changegamestate', 'POST', {
+        action: 'settime',
+        body: { gameId }
+      });
     }
   }, [hasStarted, isGameOver, gameId, startTime]);
 
@@ -101,14 +99,7 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
 
   if (isGameOver) {
     return (
-      <div className="timer"
-        style={{
-          justifySelf: "center",
-          fontWeight: "bold",
-          marginRight: "10px",
-        }}
-      >
-        <p>Out of time</p>
+      <div className="timer">
       </div>
     );
   }
@@ -147,7 +138,7 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
     credentials: "include",
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Session ${localStorage.getItem('sessionId') || ''}`
+      'Authorization': `User ${localStorage.getItem('userId')} || ''}`
     }
   };
 
@@ -158,7 +149,6 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
   try {
     const response = await fetch(`${apiUrl}/${req}`, options);
 
-    // Read the body as text once
     const text = await response.text();
     console.log("Raw response:", text);
 
@@ -166,7 +156,6 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
       throw new Error(`API request failed: ${response.status} ${response.statusText} - ${text}`);
     }
 
-    // Try to parse JSON
     try {
       return JSON.parse(text);
     } catch {
@@ -177,6 +166,74 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
   }
 }
 
+async function fetchUser(userId) {
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
+  const options = {
+    method: 'GET',
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+
+  const url = `${apiUrl}/loaduserid?userId=${encodeURIComponent(userId)}`;
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status ${response.status}`);
+    }
+    const responseJson = await response.json();
+    return responseJson;
+  }
+  catch (err) {
+    console.error("Error loading users: ", err.message);
+    return null;
+  }
+}
+
+async function fetchGameState(req, reqMethod = 'GET', reqData = "Your data here") {
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
+
+  const options = {
+    method: reqMethod,
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  };
+
+  if ((reqMethod === 'POST' || reqMethod === 'PUT') && reqData !== "Your data here") {
+    options.body = JSON.stringify(reqData);
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/${req}`, options);
+    const cloned = response.clone();
+    console.log("Raw response:", await cloned.text());
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText} - ${JSON.stringify(data)}`
+      );
+    }
+    return data;
+  } catch (error) {
+    throw new Error(`Fetch error: ${error.message}`);
+  }
+}
 
 function LoadingDiv() {
   return (
@@ -192,4 +249,4 @@ function LoadingDiv() {
 
 
 
-export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle };
+export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle, fetchUser, fetchGameState };

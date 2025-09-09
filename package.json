@@ -23,19 +23,21 @@
   "homepage": "https://github.com/hiiamJMYDETH/wythoffs-game#readme",
   "dependencies": {
     "@dataconnect/generated": "link:dataconnect-generated/js/example-connector",
+    "@neondatabase/serverless": "^1.0.1",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
-    "firebase": "^12.1.0",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^13.5.0",
     "ioredis": "^5.5.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.3",
     "redis": "^4.7.0",
+    "serve": "^14.2.4",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
-    "vercel": "^41.3.0",
-    "serve": "^14.2.4"
+    "vercel": "^47.0.6"
   },
   "devDependencies": {
     "rollup": "^4.49.0"

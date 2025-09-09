@@ -1,14 +1,27 @@
 import { useState, useEffect, useRef } from "react";
 import { useMobileDetect, fetching } from "../components/utilities.jsx";
 import { useNavigate } from "react-router-dom";
-import { database } from "../config/firebase.js";
-import { ref, remove, onValue } from "firebase/database";
+import { database, auth } from "../config/firebase.js";
+import { ref, remove, onValue, set, runTransaction } from "firebase/database";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import GameOnline from "../components/GameOnline.jsx";
 import SideBar from "../components/SideBar.jsx";
 
-async function handleGameState(sessionId) {
-  const response = await fetching("match", "POST", { sessionId });
+function generateUID(length = 28) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let uid = '';
+  const randomValues = new Uint32Array(length);
+  window.crypto.getRandomValues(randomValues);
+
+  for (let i = 0; i < length; i++) {
+    uid += chars[randomValues[i] % chars.length];
+  }
+
+  return uid;
+}
+
+async function handleGameState(playerId) {
+  const response = await fetching("match", "POST", { playerId });
   return response;
 }
 
@@ -31,99 +44,81 @@ function GameLobby() {
   );
 }
 
-function useRematch(id, player, opponent) {
-  const [rematch, setRematch] = useState(null);
-
+function useAutonomousRematch(gameId, player, opponent, handleNewGame) {
   useEffect(() => {
-    if (!id) return;
+    if (!gameId) return;
 
-    const rematchRef = ref(database, `rematches/${id}`);
-    const unsubscribe = onValue(rematchRef, (snapshot) => {
-      if (!snapshot.exists()) {
-        setRematch(null);
-        return;
-      }
+    const rematchRef = ref(database, `rematches/${gameId}`);
 
-      const rematchState = snapshot.val();
-      const playerState = rematchState[player];
-      const opponentState = rematchState[opponent];
+    const unsubscribe = onValue(rematchRef, async (snapshot) => {
+      if (!snapshot.exists()) return;
+
+      const state = snapshot.val();
+      const playerState = state[player];
+      const opponentState = state[opponent];
 
       if (playerState === "1" && opponentState === "1") {
-        setRematch("accepted");
-      } else if (playerState === "0" || opponentState === "0") {
-        setRematch("declined");
-      } else {
-        setRematch("waiting");
+        const newGameRef = ref(database, `rematches/${gameId}/newGameId`);
+
+        await runTransaction(newGameRef, async (current) => {
+          if (current) {
+            return current;
+          }
+
+          const newGameId = generateUID();
+
+          await set(ref(database, `games/${newGameId}`), {
+            gameId: newGameId,
+            players: [player, opponent],
+            createdAt: Date.now(),
+            state: "waiting",
+          });
+
+          await remove(ref(database, `games/${gameId}`));
+
+          handleNewGame(newGameId);
+
+          return newGameId; 
+        });
+      }
+
+      if (playerState === "0" || opponentState === "0") {
+        await remove(ref(database, `games/${gameId}`));
+        handleNewGame(null, true); 
       }
     });
 
     return () => unsubscribe();
-  }, [id, player, opponent]);
-
-  return rematch;
+  }, [gameId, player, opponent, handleNewGame]);
 }
 
 function PlayAgain({ player, opponent, id, handleGameId, handleGameOver }) {
-  const status = useRematch(id, player, opponent);
+  useAutonomousRematch(id, player, opponent, (newGameId, declined) => {
+    if (declined) {
+      window.location.href = "/";
+    } else {
+      handleGameId(newGameId);
+      handleGameOver(false);
+    }
+  });
 
   async function handleMatchClick(value) {
-    await fetching("rematch", "POST", { value, player, id });
+    const choiceRef = ref(database, `rematches/${id}`);
+    await set(ref(database, `rematches/${id}/${player}`), value ? "1" : "0");
   }
 
-  useEffect(() => {
-    if (status === "accepted") {
-      fetching("finalizerematch", "POST", { oldGameId: id, player, opponent });
-
-      const newGameRef = ref(database, `rematches/${id}/newGameId`);
-      const unsubscribe = onValue(newGameRef, (snapshot) => {
-        if (snapshot.exists()) {
-          handleGameId(snapshot.val());
-          handleGameOver(false);
-        }
-      });
-
-      return () => unsubscribe();
-    }
-
-    if (status === "declined") {
-      remove(ref(database, `games/${id}`));
-      window.location.href = "/";
-    }
-  }, [status, id, player, opponent, handleGameId, handleGameOver]);
-
   return (
-    <div className="box" style={{ position: "relative" }}>
+    <div className="box" style={{position: 'relative'}}>
       <h2>Play Again</h2>
-      <button className="button" onClick={() => handleMatchClick(true)}>
-        Yes
-      </button>
-      <button className="button" onClick={() => handleMatchClick(false)}>
-        No
-      </button>
-
-      {status === "accepted" && <p>Both players agreed! Starting new game...</p>}
-      {status === "declined" && <p>One player declined</p>}
-      {status === "waiting" && <p>Waiting for players to decide...</p>}
+      <button class="button" onClick={() => handleMatchClick(true)}>Yes</button>
+      <button class="button" onClick={() => handleMatchClick(false)}>No</button>
     </div>
   );
 }
 
 function GamePageOnline() {
   const navigate = useNavigate();
-  const sessionId = localStorage.getItem("sessionId") || null;
-
-  // safely parse user
-  const [user] = useState(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const userId = user?.userId || null;
-
+  const userId = localStorage.getItem('userId') || null;
   const [game, setGame] = useState(null);
   const [gameOver, setGameover] = useState(false);
   const [opponent, setOpponent] = useState(null);
@@ -132,22 +127,22 @@ function GamePageOnline() {
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  // Guard: no session or user → go to login
-  useEffect(() => {
-    if (!sessionId || !userId) {
-      localStorage.removeItem("user");
-      localStorage.removeItem("sessionId");
-      navigate("/login", { replace: true });
-    }
-  }, [sessionId, userId, navigate]);
+  console.log("Is game over: ", gameOver);
+  console.log("Is there a game: ", game);
 
-  // Polling for matchmaking
   useEffect(() => {
-    if (!sessionId || !userId) return;
+    if (!userId) {
+      localStorage.removeItem("userId");
+      navigate("/register", { replace: true });
+    }
+  }, [userId, navigate]);
+
+  useEffect(() => {
+    if (!userId) return;
 
     async function fetchGame() {
       try {
-        const result = await handleGameState(sessionId);
+        const result = await handleGameState(userId);
 
         if (result?.gameId) {
           setGame(result.gameId);
@@ -169,8 +164,7 @@ function GamePageOnline() {
 
         // if backend says invalid session
         if (err.message?.includes("Unauthorized")) {
-          localStorage.removeItem("user");
-          localStorage.removeItem("sessionId");
+          localStorage.removeItem("userId");
           navigate("/login", { replace: true });
         }
       }
@@ -182,13 +176,14 @@ function GamePageOnline() {
     timeoutRef.current = setTimeout(() => {
       console.warn("⏳ Matchmaking timed out after 60 seconds.");
       clearInterval(intervalRef.current);
+      navigate("/");
     }, 60000);
 
     return () => {
       clearInterval(intervalRef.current);
       clearTimeout(timeoutRef.current);
     };
-  }, [sessionId, userId, navigate]);
+  }, [userId, navigate]);
 
   return (
     <div className="page">

@@ -1,5 +1,6 @@
-import bcrypt from "bcrypt";
 import pool from "../config/db.js";
+import { adminDb, adminAuth } from "../config/firebase.js";
+import {get, set} from "firebase/database";
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -19,8 +20,6 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Missing id or old username" });
     }
 
-    const saltRounds = 10;
-    // const client = await connectToDatabase();
     const client = pool;
     const result = await client.query(
         "SELECT * FROM users WHERE username = $1 AND ID = $2",
@@ -31,28 +30,21 @@ export default async function handler(req, res) {
         return res.status(401).json({ message: "Invalid login" });
     }
 
-    const user = result.rows[0];
+    await adminAuth.updateUser(userId, {
+        password: newPassword,
+        displayName: newUsername
+    });
 
-    const Oldmatch = await bcrypt.compare(oldPassword, user.usr_pwd);
-    if (!Oldmatch) {
-        return res.status(401).json({ message: "Wrong old password" });
-    }
     if (newUsername) {
         await client.query(
             "UPDATE users SET username = $1 WHERE id = $2",
             [newUsername, userId]
         );
-    }
-    if (newPassword) {
-        const oldNewMatch = await bcrypt.compare(newPassword, user.usr_pwd);
-        if (oldNewMatch) {
-            return res.status(401).json({message: "Same password! You can't use that"})
-        }
-        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-        await client.query(
-            "UPDATE users SET usr_pwd = $1 WHERE id = $2",
-            [hashedPassword, userId]
-        )
+        const userRef = adminDb.ref(`users/${userId}`);
+        const userSnap = await get(userRef);
+        if (!userSnap.exists()) return res.status(404).json({message: "User does not exist"});
+
+        await set(userRef, {...userSnap.val(), username: newUsername});
     }
 
     res.status(200).json({ message: "Successfully changed info" });

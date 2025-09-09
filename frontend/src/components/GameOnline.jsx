@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import Board from "./Board";
 import Player from "./Player.jsx";
-import { Counter, useMobileDetect, fetching, WarningToggle } from "./utilities.jsx";
+import { Counter, useMobileDetect, fetchGameState, WarningToggle } from "./utilities.jsx";
 import { database } from "../config/firebase.js";
-import { ref, onChildAdded, off, get, push, set } from "firebase/database";
+import { ref, onChildAdded, off, get } from "firebase/database";
 import "../styles/Game.css";
 import "../styles/page.css";
 
@@ -26,44 +26,20 @@ const generateInitialState = async (numberOfBalls, totalSeconds, id, player, opp
     const determineTurn = Math.random() < 0.5;
     const playerTurn = determineTurn ? player : opponent;
 
-    const startshot = {
+    const initialState = {
+        id,
         left,
         right,
         numberOfBalls,
         totalSeconds,
         playerTurn,
         movedBy: "system",
-        move: 0
-    };
-
-    const histshot = {
-        left,
-        right,
-        playerTurn,
-        movedBy: "system",
-        move: 0
+        move: 0,
+        timeShot: Date.now()
     }
 
-    const timeShot = Date.now();
-
-    const gameRef = ref(database, `games/${id}`);
-    const gameSnap = await get(gameRef);
-    if (!gameSnap.exists()) return res.status(404).json({ message: "Game does not exist" });
-    await set(gameRef, { ...gameSnap.val(), state: "started" });
-
-    const startRef = ref(database, `games/${id}/start`);
-    const startSnap = await get(startRef);
-    if (!startSnap.exists()) {
-        await set(startRef, startshot);
-    }
-
-    const histRef = ref(database, `games/${id}/history`);
-    await push(histRef, histshot);
-
-    const timeRef = ref(database, `games/${id}/startTime`);
-    await set(timeRef, timeShot);
-
-    return histshot;
+    const response = await fetchGameState('changegamestate', 'POST', { action: 'makenew', body: initialState });
+    return response;
 };
 
 async function confirmMove(request) {
@@ -91,6 +67,7 @@ async function confirmMove(request) {
     }
 
     const requestedMove = {
+        id,
         left: Array.isArray(left) ? left : [],
         right: Array.isArray(right) ? right : [],
         move,
@@ -98,8 +75,12 @@ async function confirmMove(request) {
         playerTurn
     };
 
-    await push(histRef, requestedMove);
-    return true;
+
+    const result = await fetchGameState('changegamestate', 'POST', { action: 'confirmmove', body: requestedMove });
+    if (result.status) {
+        return true;
+    }
+    return false;
 }
 
 export default function GameOnline({ id, player, opponent, handleResult }) {
@@ -128,13 +109,12 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
 
         const historyRef = ref(database, `games/${id}/history`);
 
-        const unsubscribe = onChildAdded(historyRef, (snapshot) => {
+        const callback = (snapshot) => {
             const newMove = snapshot.val();
             const key = snapshot.key;
 
             setHistory(prev => {
                 if (prev.some(m => m._key === key)) return prev;
-
                 const updated = [...prev, { ...newMove, _key: key }];
 
                 setPlayerIsNext(String(newMove.playerTurn) === String(player));
@@ -151,15 +131,14 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     const winnerId = newMove.movedBy;
                     setWinner(winnerId);
                     setGameOver(true);
-
-                    fetching('fetchresults', 'POST', { gameId: id, player, opponent });
                 }
-
                 return updated;
             });
-        });
+        };
 
-        return () => off(historyRef, "child_added", unsubscribe);
+        onChildAdded(historyRef, callback);
+
+        return () => off(historyRef, "child_added", callback);
     }, [id, player, opponent]);
 
 
@@ -175,7 +154,7 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
     async function handleConfirm() {
         if (!playerIsNext || gameOver || savedBalls.length === 0) return;
 
-        const lastState = history[currentMove];
+        const lastState = history[history.length - 1];
         if (!lastState) return;
 
         const newLeftBalls = lastState.left ? lastState.left.filter(b => !savedBalls.includes(`left-${b}`)) : [];
@@ -198,7 +177,7 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
             id,
             left: newLeftBalls,
             right: newRightBalls,
-            move: currentMove + 1,
+            move: history?.length,
             playerTurn: nextTurn,
             movedBy: player
         };
@@ -214,27 +193,23 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
     }
 
     useEffect(() => {
-        if (gameOver) {
+        async function reportResults() {
+            const response = await fetchGameState('changegamestate', 'POST', { action: 'endgame', body: { gameId: id, player, opponent } });
+            if (!response) return false;
             handleResult(true);
+            return true;
+        }
+        if (gameOver) {
+            reportResults();
         }
     }, [gameOver, handleResult]);
 
-    async function handleRestart() {
-        const totalSeconds = minutes * 60 + seconds;
-
-        await generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
-        setSavedBalls([]);
-        setCurrentMove(0);
-        setGameOver(false);
-        setGameStart(false);
-    }
-
     let status;
     if (winner) {
-        status = "Winner: " + (!playerIsNext ? "You" : opponent);
+        status = "Winner: " + (!playerIsNext ? "You" : "Opponent");
     }
     else if (!gameOver) {
-        status = "Next player: " + (playerIsNext ? "You" : opponent);
+        status = "Turn: " + (playerIsNext ? "You" : "Opponent");
     }
     else {
         status = "Game Over";
@@ -306,6 +281,7 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     <br />
                     <button className="button" onClick={() => {
                         const totalSeconds = parseInt(minutes) * 60 + parseInt(seconds);
+                        setMaxSeconds(totalSeconds);
                         generateInitialState(numberOfballs, totalSeconds, id, player, opponent);
                         setCurrentMove(0);
                         setGameSettings(false);
@@ -319,8 +295,8 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                     <div className="game">
                         <Board leftBalls={leftBalls} rightBalls={rightBalls} onBallClick={handleBallClick} savedBalls={savedBalls} />
                         <div className="status" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', width: '100%', backgroundColor: 'transparent' }}>
-                            <Player name={Number(player)} />
-                            <Player name={Number(opponent)} />
+                            <Player name={player} />
+                            <Player name={opponent} />
                         </div >
                     </div>
                     <div className="status" ref={gameInfo}>
@@ -332,13 +308,7 @@ export default function GameOnline({ id, player, opponent, handleResult }) {
                             <ol>{moves}</ol>
                         </div>
                         <div style={{ bottom: '0', margin: '5px', justifyContent: 'center' }}>
-                            {!gameOver && (<button className="button main" onClick={handleConfirm} style={{ minHeight: '50px' }}>Confirm Move</button>)}
-                            {
-                                gameOver && (
-                                    <button className="button main" onClick={handleRestart} style={{ minHeight: '50px' }}>Restart Game</button>
-                                )
-                            }
-                            <button className="button" onClick={() => setGameSettings(!gameSettings)} style={{ width: '100%', minHeight: '20px' }}>Game Settings</button>
+                            <button className="button main" onClick={handleConfirm} style={{ minHeight: '90px', width: '200px' }}>Confirm Move</button>
                         </div>
                     </div>
                 </>

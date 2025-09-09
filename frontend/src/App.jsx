@@ -5,20 +5,24 @@ import PlayPage from "./pages/PlayPage.jsx";
 import GamePageCPU from "./pages/GamePageCPU.jsx";
 import GamePageOnline from "./pages/GamePageOnline.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import SignUpPage from "./pages/SignUpPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx"
+// import LoginPage from "./pages/LoginPage.jsx";
+// import SignUpPage from "./pages/SignUpPage.jsx";
 import HelpPage from "./pages/HelpPage.jsx";
 
 const usePageTitle = () => {
   const location = useLocation();
   useEffect(() => {
     switch (location.pathname) {
-      case '/login':
-        document.title = 'Login';
+      case '/register':
+        document.title = 'Register';
         break;
-      case '/signup':
-        document.title = 'Signup';
-        break;
+      // case '/login':
+      //   document.title = 'Login';
+      //   break;
+      // case '/signup':
+      //   document.title = 'Signup';
+      //   break;
       case '/play':
         document.title = "Play";
         break;
@@ -46,8 +50,7 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/play" element={<PlayPage key={location.search} />} />
         <Route path="/play/computer" element={<GamePageCPU key={location.search} />} />
         <Route path="/play/online" element={<GamePageOnline key={location.search} />} />

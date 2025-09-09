@@ -1,4 +1,5 @@
-import checkSession from "../config/checksession.js";
+import { adminDb } from "../config/firebase.js";
+import pool from "../config/db.js";
 
 export default async function handler(req, res) {
 
@@ -15,13 +16,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const sessionId = req.headers["authorization"]?.replace("Session ", "");
-    if (!sessionId) return res.status(401).json({ message: "Unauthorized" });
 
-    const userId = await checkSession(sessionId);
-    if (!userId) return res.status(401).json({ message: "Invalid or expired session" });
+    const userId = req.query.userId;
 
-    res.status(200).json({ message: "Authorized", userId });
+    if (!userId) return res.status(404).json({ error: "Missing UID" });
+
+    const snapshot = await adminDb.ref(`users/${userId}`).once("value");
+    const userData = snapshot.val();
+    if (!userData) return res.status(404).json({ error: "User not found" });
+
+    const results = await pool.query("SELECT * FROM users WHERE id = $1", [userId]);
+    res.status(200).json({ message: "Authorized", user: userData, poolUser: results.rows });
   } catch (error) {
     console.error("Error in loaduser:", error);
     res.status(500).json({ message: error.message });
