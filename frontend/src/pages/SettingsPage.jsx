@@ -3,11 +3,13 @@ import SideBar from "../components/SideBar";
 import { useMobileDetect, LoadingDiv, fetchUser, fetching } from "../components/utilities";
 import "../styles/page.css";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import UserDefault from "../assets/User default.svg";
 import { auth } from "../config/firebase.js";
 import { signOut } from "firebase/auth";
 
 function SettingsPage() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const isMobile = useMobileDetect();
     const userId = localStorage.getItem('userId') || null;
@@ -72,6 +74,11 @@ function SettingsPage() {
             console.error("Error signing out: ", error);
         });
 
+    }
+
+    function handleRegisterButton() {
+        navigate('/register');
+        return;
     }
 
     return (
@@ -167,7 +174,7 @@ function SettingsPage() {
                         ) : (
                             <>
                                 <br />
-                                <button className="button main" style={{ minHeight: '100px' }} onClick={window.location.href = '/register'}>Register an Account</button>
+                                <button className="button main" style={{ minHeight: '100px' }} onClick={handleRegisterButton}>Register an Account</button>
                             </>
                         )}
                     </div>

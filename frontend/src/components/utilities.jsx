@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { database } from "../config/firebase.js";
-import { ref, set, onValue } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 
 function useMobileDetect() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -44,14 +44,6 @@ function handleClick(id, navigate) {
     navigate('/register');
     return;
   }
-  // if (id === "login") {
-  //   navigate('/login');
-  //   return;
-  // }
-  // if (id === "signup") {
-  //   navigate('/signup');
-  //   return;
-  // }
   if (id === "help") {
     navigate('/help');
     return;
@@ -64,8 +56,10 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
 
   useEffect(() => {
     if (hasStarted && !isGameOver) {
-      const timeRef = ref(database, `games/${gameId}/startTime`);
-      set(timeRef, Date.now());
+      fetchGameState('changegamestate', 'POST', {
+        action: 'settime',
+        body: { gameId }
+      });
     }
   }, [hasStarted, isGameOver, gameId]);
 
@@ -103,14 +97,7 @@ function Counter({ isGameOver, setter, maxSeconds, hasStarted, gameId }) {
 
   if (isGameOver) {
     return (
-      <div className="timer"
-        style={{
-          justifySelf: "center",
-          fontWeight: "bold",
-          marginRight: "10px",
-        }}
-      >
-        <p>Out of time</p>
+      <div className="timer">
       </div>
     );
   }
@@ -178,32 +165,72 @@ async function fetching(req, reqMethod = 'GET', reqData = "Your data here") {
 }
 
 async function fetchUser(userId) {
-    const apiUrl =
-        import.meta.env.VITE_API_URL ||
-        (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
 
-    const options = {
-        method: 'GET',
-        credentials: "include",
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
+  const options = {
+    method: 'GET',
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
 
-    const url = `${apiUrl}/loaduserid?userId=${encodeURIComponent(userId)}`;
+  const url = `${apiUrl}/loaduserid?userId=${encodeURIComponent(userId)}`;
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status ${response.status}`);
+    }
+    const responseJson = await response.json();
+    return responseJson;
+  }
+  catch (err) {
+    console.error("Error loading users: ", err.message);
+    return null;
+  }
+}
+
+async function fetchGameState(req, reqMethod = 'GET', reqData = "Your data here") {
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? import.meta.env.LOCAL_API_URL : "/api");
+
+
+  const options = {
+    method: reqMethod,
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  };
+
+  if ((reqMethod === 'POST' || reqMethod === 'PUT') && reqData !== "Your data here") {
+    options.body = JSON.stringify(reqData);
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/${req}`, options);
+    const cloned = response.clone();
+    console.log("Raw response:", await cloned.text());
+
+    let data;
     try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status ${response.status}`);
-        }
-        const responseJson = await response.json();
-        return responseJson;
+      data = await response.json();
+    } catch {
+      data = null;
     }
-    catch (err) {
-        console.error("Error loading users: ", err.message);
-        localStorage.removeItem('userId');
-        return null;
+
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText} - ${JSON.stringify(data)}`
+      );
     }
+    return data;
+  } catch (error) {
+    throw new Error(`Fetch error: ${error.message}`);
+  }
 }
 
 function LoadingDiv() {
@@ -220,4 +247,4 @@ function LoadingDiv() {
 
 
 
-export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle, fetchUser };
+export { useMobileDetect, Counter, handleClick, fetching, LoadingDiv, WarningToggle, fetchUser, fetchGameState };
