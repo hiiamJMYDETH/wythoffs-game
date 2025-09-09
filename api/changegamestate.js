@@ -92,16 +92,12 @@ async function confirmMove(body) {
 
 async function fetchGameResults(game) {
     const { createdAt, gameId, history, players } = game;
-    let script;
-    script = `SELECT * FROM games WHERE game_id = $1`;
-    const response = await pool.query(script, [gameId]);
-    if (response.rows.length === 0) {
-        script = `
-        INSERT INTO games (game_id, history, players, created_at)
-        VALUES ($1, $2, $3, $4)
-    `;
+    const script = `
+            INSERT INTO games (game_id, history, players, created_at)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (game_id) DO NOTHING;
+        `;
         await pool.query(script, [gameId, history, JSON.stringify(players), createdAt]);
-    }
 }
 
 async function updateUser(userId, type, gameId) {

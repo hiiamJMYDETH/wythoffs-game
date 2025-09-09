@@ -2,10 +2,23 @@ import { useState, useEffect, useRef } from "react";
 import { useMobileDetect, fetching } from "../components/utilities.jsx";
 import { useNavigate } from "react-router-dom";
 import { database, auth } from "../config/firebase.js";
-import { ref, remove, onValue, set } from "firebase/database";
+import { ref, remove, onValue, set, runTransaction } from "firebase/database";
 import MobileSideBar from "../components/MobileSideBar.jsx";
 import GameOnline from "../components/GameOnline.jsx";
 import SideBar from "../components/SideBar.jsx";
+
+function generateUID(length = 28) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let uid = '';
+  const randomValues = new Uint32Array(length);
+  window.crypto.getRandomValues(randomValues);
+
+  for (let i = 0; i < length; i++) {
+    uid += chars[randomValues[i] % chars.length];
+  }
+
+  return uid;
+}
 
 async function handleGameState(playerId) {
   const response = await fetching("match", "POST", { playerId });
@@ -36,6 +49,7 @@ function useAutonomousRematch(gameId, player, opponent, handleNewGame) {
     if (!gameId) return;
 
     const rematchRef = ref(database, `rematches/${gameId}`);
+
     const unsubscribe = onValue(rematchRef, async (snapshot) => {
       if (!snapshot.exists()) return;
 
@@ -43,18 +57,29 @@ function useAutonomousRematch(gameId, player, opponent, handleNewGame) {
       const playerState = state[player];
       const opponentState = state[opponent];
 
-      if (playerState === "1" && opponentState === "1" && !state.newGameId) {
-        const newGameId = Date.now(); 
-        await set(ref(database, `games/${newGameId}`), {
-          players: [player, opponent],
-          createdAt: Date.now(),
-          state: "waiting",
+      if (playerState === "1" && opponentState === "1") {
+        const newGameRef = ref(database, `rematches/${gameId}/newGameId`);
+
+        await runTransaction(newGameRef, async (current) => {
+          if (current) {
+            return current;
+          }
+
+          const newGameId = generateUID();
+
+          await set(ref(database, `games/${newGameId}`), {
+            gameId: newGameId,
+            players: [player, opponent],
+            createdAt: Date.now(),
+            state: "waiting",
+          });
+
+          await remove(ref(database, `games/${gameId}`));
+
+          handleNewGame(newGameId);
+
+          return newGameId; 
         });
-
-        await set(ref(database, `rematches/${gameId}/newGameId`), newGameId);
-        await remove(ref(database, `games/${gameId}`));
-
-        handleNewGame(newGameId);
       }
 
       if (playerState === "0" || opponentState === "0") {
@@ -102,6 +127,9 @@ function GamePageOnline() {
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
 
+  console.log("Is game over: ", gameOver);
+  console.log("Is there a game: ", game);
+
   useEffect(() => {
     if (!userId) {
       localStorage.removeItem("userId");
@@ -148,6 +176,7 @@ function GamePageOnline() {
     timeoutRef.current = setTimeout(() => {
       console.warn("⏳ Matchmaking timed out after 60 seconds.");
       clearInterval(intervalRef.current);
+      navigate("/");
     }, 60000);
 
     return () => {

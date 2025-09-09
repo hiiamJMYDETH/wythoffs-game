@@ -1,12 +1,14 @@
 import { connectRedis } from "../config/redis.js";
 import { adminDb } from "../config/firebase.js";
 import {ref, set, get} from "firebase/database";
+import generateUID from "../config/idgen.js";
 
 async function findOrCreateGame(playerId) {
+  const newGameId = generateUID();
   const luaScript = `
     local waiting = redis.call("LPOP", "matchmaking:queue")
     if waiting and waiting ~= ARGV[1] then
-      local gameId = redis.call("INCR", "game:id:counter")
+      local gameId = ARGV[2]
       -- store gameId for both players in Redis
       redis.call("HSET", "player:" .. waiting, "gameId", gameId)
       redis.call("HSET", "player:" .. ARGV[1], "gameId", gameId)
@@ -20,7 +22,7 @@ async function findOrCreateGame(playerId) {
   const redisClient = await connectRedis();
   const result = await redisClient.eval(luaScript, {
     keys: [],
-    arguments: [String(playerId)],
+    arguments: [String(playerId), String(newGameId)],
   });
 
   if (!result) return null;
@@ -34,7 +36,7 @@ async function findOrCreateGame(playerId) {
       gameId,
       players: [p1, p2],
       createdAt: Date.now(),
-      state: "waitingToStart",
+      state: "waiting",
     };
     await set(gameRef, gameData);
   }
