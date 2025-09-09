@@ -210,9 +210,10 @@ function RegisterPage() {
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
-                                    handleLoginClick();
+                                    handleSignUpClick();
                                 }
-                            }} />
+                            }}
+                        />
                         <br />
                         <button className="button" onClick={handleLoginClick}>Login</button>
                         <button className="button"
