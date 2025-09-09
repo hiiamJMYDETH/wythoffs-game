@@ -30,6 +30,7 @@ function SideBar() {
             } catch (err) {
                 console.error(err);
                 setUser(null);
+                localStorage.removeItem('userId');
             } finally {
                 setLoading(false);
             }

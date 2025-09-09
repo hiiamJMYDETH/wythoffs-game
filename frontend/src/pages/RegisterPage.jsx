@@ -23,7 +23,7 @@ async function handleSignUp(navigate, email, username, password, confirmPass, se
     const { uid } = userCredential.user;
 
     const response = await fetching('registeracc', 'POST', { type: 'signup', userId: uid, username, email: email });
-    if (response.status != "success") {
+    if (response.status != true) {
         setWrongInfo(true);
         return;
     }
@@ -45,7 +45,7 @@ async function handleLogin(navigate, email, password, setMissingInfo, setWrongIn
     const { uid } = userCredential.user;
 
     const response = await fetching('registeracc', 'POST', { type: 'login', userId: uid, email: email });
-    if (response.status != "success") {
+    if (response.status != true) {
         setWrongInfo(true);
         return;
     }

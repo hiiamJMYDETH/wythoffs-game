@@ -25,15 +25,16 @@ function SettingsPage() {
             try {
                 const data = await fetchUser(userId);
                 if (data.user) {
-                    const user = data.user;
+                    const user = data.poolUser[0];
                     setUserObj(user);
                     setWin(user.win);
-                    setLoss(user.loss);
+                    setLoss(user.lose);
                     setOldUsername(user.username);
                 }
             } catch (err) {
                 console.error(err);
                 setUserObj(null);
+                localStorage.removeItem('userId');
             } finally {
                 setLoading(false);
             }
@@ -166,9 +167,7 @@ function SettingsPage() {
                         ) : (
                             <>
                                 <br />
-                                <button className="button main" style={{ minHeight: '100px' }}>Sign Up</button>
-                                <br />
-                                <button className="button main" style={{ minHeight: '100px' }}>Login</button>
+                                <button className="button main" style={{ minHeight: '100px' }} onClick={window.location.href = '/register'}>Register an Account</button>
                             </>
                         )}
                     </div>

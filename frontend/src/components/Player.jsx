@@ -1,6 +1,6 @@
 import "../styles/page.css";
 import UserDefault from "../assets/User default.svg";
-import { fetching } from "./utilities";
+import { fetchUser } from "./utilities";
 import { useEffect, useState } from "react";
 import CPU from "../assets/CPU.svg";
 
@@ -24,31 +24,25 @@ function Player({ name }) {
             setLoss(0);
             return;
         }
-
-        async function loadUsers() {
+        async function loadUser() {
+            setLoading(true);
             try {
-                setLoading(true);
-                const users = await fetching("users");
-                if (users) {
-                    const matchedUser = users.find((user) => user.id === name);
-                    console.log("User: ", matchedUser);
-                    if (matchedUser) {
-                        const { username, win, lose } = matchedUser;
-                        setUser(matchedUser);
-                        setUsername(username);
-                        setWin(win);
-                        setLoss(lose);
-                    }
+                const data = await fetchUser(name);
+                if (data.user) {
+                    const user = data.poolUser[0];
+                    setUser(user);
+                    setWin(user.win);
+                    setLoss(user.lose);
+                    setUsername(user.username);
                 }
-            } catch (error) {
-                console.error("Error loading users:", error.message);
-                localStorage.removeItem("token");
+            } catch (err) {
+                console.error(err);
+                setUser(null);
             } finally {
                 setLoading(false);
             }
         }
-
-        loadUsers();
+        loadUser();
     }, [name]);
 
     var image = name === "computer" ? CPU : UserDefault;

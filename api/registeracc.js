@@ -13,13 +13,11 @@ async function signUpUser(userId, username, email) {
 
     await adminDb.ref(`users/${userId}`).set({
         email,
-        username,
-        win: 0,
-        loss: 0
+        username
     });
 
     return {
-        status: "success",
+        status: true,
         message: "Signup successful",
         userId
     };
@@ -33,11 +31,14 @@ async function loginUser(userId, email) {
     );
 
     if (result.rows.length === 0) {
-        return res.status(401).json({ message: "Invalid login" });
+        return {
+            status: false,
+            message: "Invalid login"
+        }
     }
 
     return {
-        status: "success",
+        status: true,
         message: "Login successful",
         userId
     };
@@ -79,6 +80,7 @@ export default async function handler(req, res) {
         if (type === 'login') {
             if (!userId || !email) return res.status(404).json({ message: "Missing email" });
             const response = await loginUser(userId, email);
+            if (!response.status) return res.status(401).json(response);
             return res.status(200).json(response);
         }
         return res.status(400).json({
